@@ -1,0 +1,1870 @@
+pcall(function()
+    local ps = game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts")
+    local k = ps:FindFirstChild("Kmdj")
+    if k then k:Destroy() end
+end)
+
+pcall(function()
+    local pg = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    local ac = pg:FindFirstChild("anticheat")
+    if ac then ac:Destroy() end
+end)
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Lighting = game:GetService("Lighting")
+local MarketplaceService = game:GetService("MarketplaceService")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+
+if PlayerGui:FindFirstChild("BossFucker") then
+    PlayerGui:FindFirstChild("BossFucker"):Destroy()
+end
+if Lighting:FindFirstChild("BFBlur") then
+    Lighting:FindFirstChild("BFBlur"):Destroy()
+end
+
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "BossFucker"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.Parent = PlayerGui
+
+local CORRECT_KEY = "god demon its ez using this script"
+local keyValidated = false
+local GAME_ICON = "rbxassetid://81424212403741"
+
+local C = {
+    bg = Color3.fromRGB(15, 15, 20),
+    card = Color3.fromRGB(22, 22, 30),
+    cardHover = Color3.fromRGB(28, 28, 38),
+    sidebar = Color3.fromRGB(12, 12, 18),
+    accent = Color3.fromRGB(88, 101, 242),
+    accentHover = Color3.fromRGB(71, 82, 196),
+    red = Color3.fromRGB(237, 66, 69),
+    green = Color3.fromRGB(87, 242, 135),
+    yellow = Color3.fromRGB(254, 231, 92),
+    orange = Color3.fromRGB(230, 126, 34),
+    white = Color3.fromRGB(255, 255, 255),
+    text = Color3.fromRGB(220, 221, 225),
+    textDim = Color3.fromRGB(148, 155, 164),
+    textMuted = Color3.fromRGB(96, 100, 108),
+    divider = Color3.fromRGB(40, 40, 55),
+    toggleOff = Color3.fromRGB(55, 55, 70),
+    input = Color3.fromRGB(30, 31, 40),
+    inputBorder = Color3.fromRGB(60, 60, 80),
+    scrollbar = Color3.fromRGB(50, 50, 65),
+    purple = Color3.fromRGB(155, 89, 242),
+    cyan = Color3.fromRGB(56, 189, 248),
+    blue = Color3.fromRGB(59, 130, 246),
+    teal = Color3.fromRGB(45, 212, 191),
+    gray = Color3.fromRGB(140, 140, 150),
+    black = Color3.fromRGB(40, 40, 45),
+    pink = Color3.fromRGB(236, 72, 153),
+}
+
+local function tw(obj, t, props, style, dir)
+    local tween = TweenService:Create(obj, TweenInfo.new(t, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
+    tween:Play()
+    return tween
+end
+
+local function corner(parent, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 8)
+    c.Parent = parent
+    return c
+end
+
+local function stroke(parent, color, thick, trans)
+    local s = Instance.new("UIStroke")
+    s.Color = color or C.divider
+    s.Thickness = thick or 1
+    s.Transparency = trans or 0.5
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Parent = parent
+    return s
+end
+
+local function pad(parent, t, b, l, r)
+    local p = Instance.new("UIPadding")
+    p.PaddingTop = UDim.new(0, t or 0)
+    p.PaddingBottom = UDim.new(0, b or 0)
+    p.PaddingLeft = UDim.new(0, l or 0)
+    p.PaddingRight = UDim.new(0, r or 0)
+    p.Parent = parent
+    return p
+end
+
+local function makeList(parent, dir, spacing, align)
+    local l = Instance.new("UIListLayout")
+    l.FillDirection = dir or Enum.FillDirection.Vertical
+    l.Padding = UDim.new(0, spacing or 6)
+    l.HorizontalAlignment = align or Enum.HorizontalAlignment.Left
+    l.SortOrder = Enum.SortOrder.LayoutOrder
+    l.Parent = parent
+    return l
+end
+
+local function teleportTo(x, y, z)
+    local char = LocalPlayer.Character
+    if char then
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.CFrame = CFrame.new(x, y, z)
+        end
+    end
+end
+
+local Blur = Instance.new("BlurEffect")
+Blur.Name = "BFBlur"
+Blur.Size = 0
+Blur.Parent = Lighting
+
+-- ============================
+-- PLAYER SETTINGS THAT PERSIST THROUGH DEATH
+-- ============================
+local playerSettings = {
+    walkSpeed = 16,
+    jumpPower = 50,
+    walkSpeedEnabled = false,
+    jumpPowerEnabled = false,
+}
+
+local function applyPlayerSettings(character)
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if not humanoid then return end
+    task.wait(0.1)
+    if playerSettings.walkSpeedEnabled then
+        humanoid.WalkSpeed = playerSettings.walkSpeed
+    end
+    if playerSettings.jumpPowerEnabled then
+        humanoid.JumpPower = playerSettings.jumpPower
+    end
+end
+
+LocalPlayer.CharacterAdded:Connect(function(char)
+    applyPlayerSettings(char)
+end)
+
+-- Apply to current character if exists
+if LocalPlayer.Character then
+    task.spawn(function()
+        applyPlayerSettings(LocalPlayer.Character)
+    end)
+end
+
+-- ============================
+-- INTRO
+-- ============================
+local Intro = Instance.new("Frame")
+Intro.Size = UDim2.new(1, 0, 1, 0)
+Intro.BackgroundColor3 = Color3.fromRGB(8, 8, 12)
+Intro.BackgroundTransparency = 0.25
+Intro.BorderSizePixel = 0
+Intro.ZIndex = 50
+Intro.Parent = ScreenGui
+
+local IntroCenter = Instance.new("Frame")
+IntroCenter.Size = UDim2.new(0, 300, 0, 220)
+IntroCenter.Position = UDim2.new(0.5, -150, 0.5, -110)
+IntroCenter.BackgroundTransparency = 1
+IntroCenter.ZIndex = 51
+IntroCenter.Parent = Intro
+
+local IntroLogo = Instance.new("ImageLabel")
+IntroLogo.Size = UDim2.new(0, 64, 0, 64)
+IntroLogo.Position = UDim2.new(0.5, -32, 0, 0)
+IntroLogo.BackgroundColor3 = C.card
+IntroLogo.BackgroundTransparency = 1
+IntroLogo.Image = GAME_ICON
+IntroLogo.ImageTransparency = 1
+IntroLogo.ZIndex = 52
+IntroLogo.ScaleType = Enum.ScaleType.Crop
+IntroLogo.Parent = IntroCenter
+corner(IntroLogo, 14)
+
+local IntroTitle = Instance.new("TextLabel")
+IntroTitle.Size = UDim2.new(1, 0, 0, 30)
+IntroTitle.Position = UDim2.new(0, 0, 0, 78)
+IntroTitle.BackgroundTransparency = 1
+IntroTitle.Text = "Boss Fucker"
+IntroTitle.TextColor3 = C.white
+IntroTitle.TextSize = 22
+IntroTitle.Font = Enum.Font.GothamBold
+IntroTitle.TextTransparency = 1
+IntroTitle.ZIndex = 52
+IntroTitle.Parent = IntroCenter
+
+local IntroWelcome = Instance.new("TextLabel")
+IntroWelcome.Size = UDim2.new(1, 0, 0, 20)
+IntroWelcome.Position = UDim2.new(0, 0, 0, 108)
+IntroWelcome.BackgroundTransparency = 1
+IntroWelcome.Text = "Welcome, " .. LocalPlayer.Name
+IntroWelcome.TextColor3 = C.textDim
+IntroWelcome.TextSize = 14
+IntroWelcome.Font = Enum.Font.Gotham
+IntroWelcome.TextTransparency = 1
+IntroWelcome.ZIndex = 52
+IntroWelcome.Parent = IntroCenter
+
+local ProgressOuter = Instance.new("Frame")
+ProgressOuter.Size = UDim2.new(0.7, 0, 0, 3)
+ProgressOuter.Position = UDim2.new(0.15, 0, 0, 150)
+ProgressOuter.BackgroundColor3 = C.divider
+ProgressOuter.BorderSizePixel = 0
+ProgressOuter.ZIndex = 52
+ProgressOuter.BackgroundTransparency = 1
+ProgressOuter.Parent = IntroCenter
+corner(ProgressOuter, 2)
+
+local ProgressInner = Instance.new("Frame")
+ProgressInner.Size = UDim2.new(0, 0, 1, 0)
+ProgressInner.BackgroundColor3 = C.accent
+ProgressInner.BorderSizePixel = 0
+ProgressInner.ZIndex = 53
+ProgressInner.BackgroundTransparency = 1
+ProgressInner.Parent = ProgressOuter
+corner(ProgressInner, 2)
+
+local IntroStatus = Instance.new("TextLabel")
+IntroStatus.Size = UDim2.new(1, 0, 0, 16)
+IntroStatus.Position = UDim2.new(0, 0, 0, 165)
+IntroStatus.BackgroundTransparency = 1
+IntroStatus.Text = ""
+IntroStatus.TextColor3 = C.textMuted
+IntroStatus.TextSize = 11
+IntroStatus.Font = Enum.Font.Gotham
+IntroStatus.TextTransparency = 1
+IntroStatus.ZIndex = 52
+IntroStatus.Parent = IntroCenter
+
+-- ============================
+-- MAIN FRAME
+-- ============================
+local SIDEBAR_W = 140
+local MAIN_W = 520
+local MAIN_H = 340
+
+local Main = Instance.new("Frame")
+Main.Name = "Main"
+Main.Size = UDim2.new(0, MAIN_W, 0, MAIN_H)
+Main.Position = UDim2.new(0.5, -MAIN_W / 2, 0.5, -MAIN_H / 2)
+Main.BackgroundColor3 = C.bg
+Main.BorderSizePixel = 0
+Main.Visible = false
+Main.BackgroundTransparency = 1
+Main.ClipsDescendants = true
+Main.ZIndex = 5
+Main.Parent = ScreenGui
+corner(Main, 10)
+local mainStroke = stroke(Main, C.divider, 1, 0.6)
+
+local SidebarFrame = Instance.new("Frame")
+SidebarFrame.Name = "Sidebar"
+SidebarFrame.Size = UDim2.new(0, SIDEBAR_W, 1, 0)
+SidebarFrame.BackgroundColor3 = C.sidebar
+SidebarFrame.BorderSizePixel = 0
+SidebarFrame.ZIndex = 6
+SidebarFrame.Parent = Main
+corner(SidebarFrame, 10)
+
+local SidebarFix = Instance.new("Frame")
+SidebarFix.Size = UDim2.new(0.5, 0, 1, 0)
+SidebarFix.Position = UDim2.new(0.5, 0, 0, 0)
+SidebarFix.BackgroundColor3 = C.sidebar
+SidebarFix.BorderSizePixel = 0
+SidebarFix.ZIndex = 6
+SidebarFix.Parent = SidebarFrame
+
+local SidebarDivider = Instance.new("Frame")
+SidebarDivider.Size = UDim2.new(0, 1, 1, -20)
+SidebarDivider.Position = UDim2.new(1, 0, 0, 10)
+SidebarDivider.BackgroundColor3 = C.divider
+SidebarDivider.BackgroundTransparency = 0.5
+SidebarDivider.BorderSizePixel = 0
+SidebarDivider.ZIndex = 7
+SidebarDivider.Parent = SidebarFrame
+
+local SidebarHeader = Instance.new("Frame")
+SidebarHeader.Size = UDim2.new(1, 0, 0, 50)
+SidebarHeader.BackgroundTransparency = 1
+SidebarHeader.ZIndex = 7
+SidebarHeader.Parent = SidebarFrame
+
+local SidebarLogo = Instance.new("ImageLabel")
+SidebarLogo.Size = UDim2.new(0, 28, 0, 28)
+SidebarLogo.Position = UDim2.new(0, 14, 0.5, -14)
+SidebarLogo.BackgroundColor3 = C.card
+SidebarLogo.BackgroundTransparency = 0
+SidebarLogo.Image = GAME_ICON
+SidebarLogo.ZIndex = 8
+SidebarLogo.ScaleType = Enum.ScaleType.Crop
+SidebarLogo.Parent = SidebarHeader
+corner(SidebarLogo, 7)
+
+local SidebarTitle = Instance.new("TextLabel")
+SidebarTitle.Size = UDim2.new(0, 85, 0, 20)
+SidebarTitle.Position = UDim2.new(0, 48, 0.5, -10)
+SidebarTitle.BackgroundTransparency = 1
+SidebarTitle.Text = "Boss Fucker"
+SidebarTitle.TextColor3 = C.text
+SidebarTitle.TextSize = 13
+SidebarTitle.Font = Enum.Font.GothamBold
+SidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
+SidebarTitle.ZIndex = 8
+SidebarTitle.Parent = SidebarHeader
+
+local TabContainer = Instance.new("Frame")
+TabContainer.Size = UDim2.new(1, 0, 1, -50)
+TabContainer.Position = UDim2.new(0, 0, 0, 50)
+TabContainer.BackgroundTransparency = 1
+TabContainer.ZIndex = 7
+TabContainer.Parent = SidebarFrame
+pad(TabContainer, 4, 8, 8, 8)
+makeList(TabContainer, Enum.FillDirection.Vertical, 2)
+
+local ContentArea = Instance.new("Frame")
+ContentArea.Size = UDim2.new(1, -SIDEBAR_W, 1, 0)
+ContentArea.Position = UDim2.new(0, SIDEBAR_W, 0, 0)
+ContentArea.BackgroundTransparency = 1
+ContentArea.BorderSizePixel = 0
+ContentArea.ZIndex = 6
+ContentArea.ClipsDescendants = true
+ContentArea.Parent = Main
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.BackgroundTransparency = 1
+TopBar.BorderSizePixel = 0
+TopBar.ZIndex = 7
+TopBar.Parent = ContentArea
+
+local PageTitle = Instance.new("TextLabel")
+PageTitle.Size = UDim2.new(0.6, 0, 1, 0)
+PageTitle.Position = UDim2.new(0, 16, 0, 0)
+PageTitle.BackgroundTransparency = 1
+PageTitle.Text = "Key"
+PageTitle.TextColor3 = C.text
+PageTitle.TextSize = 16
+PageTitle.Font = Enum.Font.GothamBold
+PageTitle.TextXAlignment = Enum.TextXAlignment.Left
+PageTitle.ZIndex = 8
+PageTitle.Parent = TopBar
+
+local Controls = Instance.new("Frame")
+Controls.Size = UDim2.new(0, 70, 0, 28)
+Controls.Position = UDim2.new(1, -82, 0.5, -14)
+Controls.BackgroundTransparency = 1
+Controls.ZIndex = 8
+Controls.Parent = TopBar
+makeList(Controls, Enum.FillDirection.Horizontal, 6)
+
+local MinBtn = Instance.new("TextButton")
+MinBtn.Size = UDim2.new(0, 28, 0, 28)
+MinBtn.BackgroundColor3 = C.card
+MinBtn.BorderSizePixel = 0
+MinBtn.Text = "-"
+MinBtn.TextColor3 = C.textDim
+MinBtn.TextSize = 16
+MinBtn.Font = Enum.Font.GothamBold
+MinBtn.AutoButtonColor = false
+MinBtn.ZIndex = 9
+MinBtn.Parent = Controls
+corner(MinBtn, 6)
+
+local CloseBtn = Instance.new("TextButton")
+CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.BackgroundColor3 = C.card
+CloseBtn.BorderSizePixel = 0
+CloseBtn.Text = "x"
+CloseBtn.TextColor3 = C.textDim
+CloseBtn.TextSize = 14
+CloseBtn.Font = Enum.Font.GothamBold
+CloseBtn.AutoButtonColor = false
+CloseBtn.ZIndex = 9
+CloseBtn.Parent = Controls
+corner(CloseBtn, 6)
+
+local TopDivider = Instance.new("Frame")
+TopDivider.Size = UDim2.new(1, -24, 0, 1)
+TopDivider.Position = UDim2.new(0, 12, 0, 42)
+TopDivider.BackgroundColor3 = C.divider
+TopDivider.BackgroundTransparency = 0.5
+TopDivider.BorderSizePixel = 0
+TopDivider.ZIndex = 7
+TopDivider.Parent = ContentArea
+
+local ContentScroll = Instance.new("ScrollingFrame")
+ContentScroll.Size = UDim2.new(1, 0, 1, -48)
+ContentScroll.Position = UDim2.new(0, 0, 0, 48)
+ContentScroll.BackgroundTransparency = 1
+ContentScroll.BorderSizePixel = 0
+ContentScroll.ScrollBarThickness = 3
+ContentScroll.ScrollBarImageColor3 = C.scrollbar
+ContentScroll.ScrollBarImageTransparency = 0.3
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+ContentScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ContentScroll.ZIndex = 7
+ContentScroll.Parent = ContentArea
+
+-- ============================
+-- TAB SYSTEM
+-- ============================
+local tabData = {
+    {name = "Key", icon = "\xF0\x9F\x94\x91", locked = false, isKey = true},
+    {name = "Home", icon = "\xF0\x9F\x8F\xA0", locked = true},
+    {name = "Combat", icon = "\xE2\x9A\x94", locked = true},
+    {name = "Player", icon = "\xF0\x9F\x91\xA4", locked = true},
+    {name = "Teleport", icon = "\xF0\x9F\x93\x8D", locked = true},
+    {name = "Settings", icon = "\xE2\x9A\x99", locked = true},
+}
+
+local tabPages = {}
+local tabBtns = {}
+local currentTab = 0
+
+for i, data in ipairs(tabData) do
+    local page = Instance.new("Frame")
+    page.Name = "Page_" .. data.name
+    page.Size = UDim2.new(1, 0, 0, 0)
+    page.AutomaticSize = Enum.AutomaticSize.Y
+    page.BackgroundTransparency = 1
+    page.Visible = false
+    page.ZIndex = 8
+    page.Parent = ContentScroll
+
+    makeList(page, Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Center)
+    pad(page, 10, 10, 14, 14)
+
+    tabPages[i] = page
+end
+
+local function selectTab(index)
+    if currentTab == index then return end
+    if tabData[index] == nil then return end
+    if not tabData[index].isKey and not keyValidated then return end
+    if tabData[index].locked and not keyValidated then return end
+
+    for _, page in ipairs(tabPages) do
+        page.Visible = false
+    end
+
+    ContentScroll.CanvasPosition = Vector2.new(0, 0)
+
+    if tabPages[index] then
+        tabPages[index].Visible = true
+    end
+
+    for i, btn in ipairs(tabBtns) do
+        if btn and btn.Parent then
+            if i == index then
+                tw(btn, 0.25, {BackgroundColor3 = C.accent, BackgroundTransparency = 0.85})
+                if btn:FindFirstChild("Label") then
+                    tw(btn.Label, 0.25, {TextColor3 = C.accent})
+                end
+            else
+                tw(btn, 0.25, {BackgroundColor3 = C.sidebar, BackgroundTransparency = 1})
+                if btn:FindFirstChild("Label") then
+                    local col = C.textDim
+                    if tabData[i] and tabData[i].locked and not keyValidated then
+                        col = C.textMuted
+                    end
+                    tw(btn.Label, 0.25, {TextColor3 = col})
+                end
+            end
+        end
+    end
+
+    if tabData[index] then
+        PageTitle.Text = tabData[index].name
+    end
+    currentTab = index
+end
+
+local function removeKeyTab()
+    if tabBtns[1] and tabBtns[1].Parent then
+        tabBtns[1]:Destroy()
+    end
+    if tabPages[1] and tabPages[1].Parent then
+        tabPages[1]:Destroy()
+    end
+    table.remove(tabBtns, 1)
+    table.remove(tabPages, 1)
+    table.remove(tabData, 1)
+    currentTab = 0
+end
+
+local function unlockAllTabs()
+    keyValidated = true
+    for i, data in ipairs(tabData) do
+        data.locked = false
+        if tabBtns[i] and tabBtns[i].Parent then
+            if tabBtns[i]:FindFirstChild("Label") then
+                tw(tabBtns[i].Label, 0.3, {TextColor3 = C.textDim})
+            end
+            local lock = tabBtns[i]:FindFirstChild("LockIcon")
+            if lock then
+                tw(lock, 0.2, {TextTransparency = 1})
+                task.delay(0.3, function()
+                    if lock.Parent then lock:Destroy() end
+                end)
+            end
+        end
+    end
+end
+
+for i, data in ipairs(tabData) do
+    local btn = Instance.new("TextButton")
+    btn.Name = "TabBtn_" .. data.name
+    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.BackgroundColor3 = C.sidebar
+    btn.BackgroundTransparency = 1
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 8
+    btn.LayoutOrder = i
+    btn.Parent = TabContainer
+    corner(btn, 6)
+
+    local icon = Instance.new("TextLabel")
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0, 22, 1, 0)
+    icon.Position = UDim2.new(0, 8, 0, 0)
+    icon.BackgroundTransparency = 1
+    icon.Text = data.icon
+    icon.TextSize = 13
+    icon.ZIndex = 9
+    icon.Parent = btn
+
+    local label = Instance.new("TextLabel")
+    label.Name = "Label"
+    label.Size = UDim2.new(1, -50, 1, 0)
+    label.Position = UDim2.new(0, 32, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = data.name
+    label.TextColor3 = data.locked and C.textMuted or C.textDim
+    label.TextSize = 12
+    label.Font = Enum.Font.GothamSemibold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 9
+    label.Parent = btn
+
+    if data.locked then
+        local lockIcon = Instance.new("TextLabel")
+        lockIcon.Name = "LockIcon"
+        lockIcon.Size = UDim2.new(0, 14, 1, 0)
+        lockIcon.Position = UDim2.new(1, -18, 0, 0)
+        lockIcon.BackgroundTransparency = 1
+        lockIcon.Text = "\xF0\x9F\x94\x92"
+        lockIcon.TextSize = 9
+        lockIcon.ZIndex = 9
+        lockIcon.Parent = btn
+    end
+
+    btn.MouseEnter:Connect(function()
+        local idx = table.find(tabBtns, btn)
+        if idx and currentTab ~= idx then
+            if tabData[idx] and (not tabData[idx].locked or keyValidated) then
+                tw(btn, 0.15, {BackgroundTransparency = 0.9, BackgroundColor3 = C.card})
+            end
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        local idx = table.find(tabBtns, btn)
+        if idx and currentTab ~= idx then
+            tw(btn, 0.15, {BackgroundTransparency = 1, BackgroundColor3 = C.sidebar})
+        end
+    end)
+    btn.MouseButton1Click:Connect(function()
+        local idx = table.find(tabBtns, btn)
+        if idx then
+            if tabData[idx] and tabData[idx].locked and not keyValidated then return end
+            selectTab(idx)
+        end
+    end)
+
+    tabBtns[i] = btn
+end
+
+-- ============================
+-- UI BUILDERS
+-- ============================
+local function makeSection(parent, title, order)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 22)
+    frame.BackgroundTransparency = 1
+    frame.ZIndex = 9
+    frame.LayoutOrder = order or 0
+    frame.Parent = parent
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = string.upper(title)
+    lbl.TextColor3 = C.textMuted
+    lbl.TextSize = 10
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 10
+    lbl.Parent = frame
+    return frame
+end
+
+local function makeToggle(parent, text, default, order, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 38)
+    frame.BackgroundColor3 = C.card
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 9
+    frame.LayoutOrder = order or 0
+    frame.Parent = parent
+    corner(frame, 8)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -60, 1, 0)
+    lbl.Position = UDim2.new(0, 14, 0, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = C.text
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 10
+    lbl.Parent = frame
+
+    local track = Instance.new("Frame")
+    track.Size = UDim2.new(0, 36, 0, 18)
+    track.Position = UDim2.new(1, -50, 0.5, -9)
+    track.BackgroundColor3 = default and C.accent or C.toggleOff
+    track.BorderSizePixel = 0
+    track.ZIndex = 10
+    track.Parent = frame
+    corner(track, 9)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.new(0, 14, 0, 14)
+    knob.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    knob.BackgroundColor3 = C.white
+    knob.BorderSizePixel = 0
+    knob.ZIndex = 11
+    knob.Parent = track
+    corner(knob, 7)
+
+    local enabled = default or false
+    local click = Instance.new("TextButton")
+    click.Size = UDim2.new(1, 0, 1, 0)
+    click.BackgroundTransparency = 1
+    click.Text = ""
+    click.ZIndex = 12
+    click.Parent = frame
+
+    click.MouseButton1Click:Connect(function()
+        enabled = not enabled
+        tw(track, 0.25, {BackgroundColor3 = enabled and C.accent or C.toggleOff})
+        tw(knob, 0.25, {Position = enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}, Enum.EasingStyle.Back)
+        if callback then callback(enabled) end
+    end)
+
+    click.MouseEnter:Connect(function() tw(frame, 0.15, {BackgroundColor3 = C.cardHover}) end)
+    click.MouseLeave:Connect(function() tw(frame, 0.15, {BackgroundColor3 = C.card}) end)
+    return frame
+end
+
+local function makeButton(parent, text, desc, order, callback)
+    local h = desc and 50 or 38
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, h)
+    btn.BackgroundColor3 = C.card
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 9
+    btn.LayoutOrder = order or 0
+    btn.Parent = parent
+    corner(btn, 8)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -40, 0, 18)
+    lbl.Position = UDim2.new(0, 14, 0, desc and 8 or 10)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = C.text
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 10
+    lbl.Parent = btn
+
+    if desc then
+        local d = Instance.new("TextLabel")
+        d.Size = UDim2.new(1, -40, 0, 14)
+        d.Position = UDim2.new(0, 14, 0, 28)
+        d.BackgroundTransparency = 1
+        d.Text = desc
+        d.TextColor3 = C.textMuted
+        d.TextSize = 10
+        d.Font = Enum.Font.Gotham
+        d.TextXAlignment = Enum.TextXAlignment.Left
+        d.ZIndex = 10
+        d.Parent = btn
+    end
+
+    local arrow = Instance.new("TextLabel")
+    arrow.Size = UDim2.new(0, 20, 1, 0)
+    arrow.Position = UDim2.new(1, -26, 0, 0)
+    arrow.BackgroundTransparency = 1
+    arrow.Text = ">"
+    arrow.TextColor3 = C.textMuted
+    arrow.TextSize = 14
+    arrow.Font = Enum.Font.GothamBold
+    arrow.ZIndex = 10
+    arrow.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
+        tw(arrow, 0.15, {TextColor3 = C.accent, Position = UDim2.new(1, -22, 0, 0)})
+    end)
+    btn.MouseLeave:Connect(function()
+        tw(btn, 0.15, {BackgroundColor3 = C.card})
+        tw(arrow, 0.15, {TextColor3 = C.textMuted, Position = UDim2.new(1, -26, 0, 0)})
+    end)
+    btn.MouseButton1Click:Connect(function()
+        tw(btn, 0.08, {BackgroundColor3 = C.accent}, Enum.EasingStyle.Linear)
+        task.wait(0.08)
+        tw(btn, 0.2, {BackgroundColor3 = C.card})
+        if callback then callback() end
+    end)
+    return btn
+end
+
+local function makeTeleportButton(parent, name, x, y, z, color, order, note)
+    local hasNote = note and note ~= ""
+    local h = hasNote and 54 or 44
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, 0, 0, h)
+    btn.BackgroundColor3 = C.card
+    btn.BorderSizePixel = 0
+    btn.Text = ""
+    btn.AutoButtonColor = false
+    btn.ZIndex = 9
+    btn.LayoutOrder = order or 0
+    btn.Parent = parent
+    corner(btn, 8)
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0.55, 0)
+    bar.Position = UDim2.new(0, 8, 0.225, 0)
+    bar.BackgroundColor3 = color or C.accent
+    bar.BorderSizePixel = 0
+    bar.ZIndex = 10
+    bar.Parent = btn
+    corner(bar, 2)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(1, -50, 0, 16)
+    lbl.Position = UDim2.new(0, 18, 0, hasNote and 4 or 6)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = name
+    lbl.TextColor3 = C.text
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 10
+    lbl.Parent = btn
+
+    local coordY = hasNote and 20 or 24
+    local coords = Instance.new("TextLabel")
+    coords.Size = UDim2.new(1, -24, 0, 12)
+    coords.Position = UDim2.new(0, 18, 0, coordY)
+    coords.BackgroundTransparency = 1
+    coords.Text = string.format("X: %d  Y: %d  Z: %d", x, y, z)
+    coords.TextColor3 = C.textMuted
+    coords.TextSize = 9
+    coords.Font = Enum.Font.Gotham
+    coords.TextXAlignment = Enum.TextXAlignment.Left
+    coords.ZIndex = 10
+    coords.Parent = btn
+
+    if hasNote then
+        local noteLabel = Instance.new("TextLabel")
+        noteLabel.Size = UDim2.new(1, -24, 0, 12)
+        noteLabel.Position = UDim2.new(0, 18, 0, 36)
+        noteLabel.BackgroundTransparency = 1
+        noteLabel.Text = note
+        noteLabel.TextColor3 = C.orange
+        noteLabel.TextSize = 9
+        noteLabel.Font = Enum.Font.GothamSemibold
+        noteLabel.TextXAlignment = Enum.TextXAlignment.Left
+        noteLabel.ZIndex = 10
+        noteLabel.Parent = btn
+    end
+
+    local tpText = Instance.new("TextLabel")
+    tpText.Size = UDim2.new(0, 24, 1, 0)
+    tpText.Position = UDim2.new(1, -32, 0, 0)
+    tpText.BackgroundTransparency = 1
+    tpText.Text = ">>"
+    tpText.TextColor3 = C.textMuted
+    tpText.TextSize = 10
+    tpText.Font = Enum.Font.GothamBold
+    tpText.ZIndex = 10
+    tpText.Parent = btn
+
+    btn.MouseEnter:Connect(function()
+        tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
+        tw(bar, 0.15, {BackgroundColor3 = C.white})
+        tw(tpText, 0.15, {TextColor3 = color or C.accent})
+    end)
+    btn.MouseLeave:Connect(function()
+        tw(btn, 0.15, {BackgroundColor3 = C.card})
+        tw(bar, 0.15, {BackgroundColor3 = color or C.accent})
+        tw(tpText, 0.15, {TextColor3 = C.textMuted})
+    end)
+    btn.MouseButton1Click:Connect(function()
+        tw(btn, 0.08, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
+        tw(lbl, 0.08, {TextColor3 = C.white}, Enum.EasingStyle.Linear)
+        teleportTo(x, y, z)
+        task.wait(0.15)
+        tw(btn, 0.25, {BackgroundColor3 = C.card})
+        tw(lbl, 0.25, {TextColor3 = C.text})
+    end)
+    return btn
+end
+
+local function makeSlider(parent, text, min, max, default, order, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 52)
+    frame.BackgroundColor3 = C.card
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 9
+    frame.LayoutOrder = order or 0
+    frame.Parent = parent
+    corner(frame, 8)
+
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0.6, 0, 0, 18)
+    lbl.Position = UDim2.new(0, 14, 0, 6)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = C.text
+    lbl.TextSize = 12
+    lbl.Font = Enum.Font.GothamSemibold
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.ZIndex = 10
+    lbl.Parent = frame
+
+    local valLbl = Instance.new("TextLabel")
+    valLbl.Size = UDim2.new(0.3, 0, 0, 18)
+    valLbl.Position = UDim2.new(0.7, -14, 0, 6)
+    valLbl.BackgroundTransparency = 1
+    valLbl.Text = tostring(default)
+    valLbl.TextColor3 = C.accent
+    valLbl.TextSize = 12
+    valLbl.Font = Enum.Font.GothamBold
+    valLbl.TextXAlignment = Enum.TextXAlignment.Right
+    valLbl.ZIndex = 10
+    valLbl.Parent = frame
+
+    local trackBG = Instance.new("Frame")
+    trackBG.Size = UDim2.new(1, -28, 0, 4)
+    trackBG.Position = UDim2.new(0, 14, 0, 36)
+    trackBG.BackgroundColor3 = C.toggleOff
+    trackBG.BorderSizePixel = 0
+    trackBG.ZIndex = 10
+    trackBG.Parent = frame
+    corner(trackBG, 2)
+
+    local pct = (default - min) / (max - min)
+    local fill = Instance.new("Frame")
+    fill.Size = UDim2.new(pct, 0, 1, 0)
+    fill.BackgroundColor3 = C.accent
+    fill.BorderSizePixel = 0
+    fill.ZIndex = 11
+    fill.Parent = trackBG
+    corner(fill, 2)
+
+    local knobF = Instance.new("Frame")
+    knobF.Size = UDim2.new(0, 12, 0, 12)
+    knobF.Position = UDim2.new(pct, -6, 0.5, -6)
+    knobF.BackgroundColor3 = C.white
+    knobF.BorderSizePixel = 0
+    knobF.ZIndex = 12
+    knobF.Parent = trackBG
+    corner(knobF, 6)
+
+    local sliding = false
+    local inputBtn = Instance.new("TextButton")
+    inputBtn.Size = UDim2.new(1, 10, 0, 20)
+    inputBtn.Position = UDim2.new(0, -5, 0, -8)
+    inputBtn.BackgroundTransparency = 1
+    inputBtn.Text = ""
+    inputBtn.ZIndex = 13
+    inputBtn.Parent = trackBG
+
+    local function update(inputPos)
+        local abs = trackBG.AbsolutePosition.X
+        local w = trackBG.AbsoluteSize.X
+        local rel = math.clamp((inputPos.X - abs) / w, 0, 1)
+        local val = math.floor(min + (max - min) * rel + 0.5)
+        local newPct = (val - min) / (max - min)
+        fill.Size = UDim2.new(newPct, 0, 1, 0)
+        knobF.Position = UDim2.new(newPct, -6, 0.5, -6)
+        valLbl.Text = tostring(val)
+        if callback then callback(val) end
+    end
+
+    inputBtn.MouseButton1Down:Connect(function() sliding = true end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input.Position)
+        end
+    end)
+    inputBtn.MouseButton1Click:Connect(function()
+        update(UserInputService:GetMouseLocation())
+    end)
+    return frame
+end
+
+local function makeInfoCard(parent, title, value, color, order)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 0, 48)
+    frame.BackgroundColor3 = C.card
+    frame.BorderSizePixel = 0
+    frame.ZIndex = 9
+    frame.LayoutOrder = order or 0
+    frame.Parent = parent
+    corner(frame, 8)
+
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0.6, 0)
+    bar.Position = UDim2.new(0, 8, 0.2, 0)
+    bar.BackgroundColor3 = color or C.accent
+    bar.BorderSizePixel = 0
+    bar.ZIndex = 10
+    bar.Parent = frame
+    corner(bar, 2)
+
+    local t = Instance.new("TextLabel")
+    t.Size = UDim2.new(1, -24, 0, 14)
+    t.Position = UDim2.new(0, 18, 0, 8)
+    t.BackgroundTransparency = 1
+    t.Text = title
+    t.TextColor3 = C.textMuted
+    t.TextSize = 10
+    t.Font = Enum.Font.Gotham
+    t.TextXAlignment = Enum.TextXAlignment.Left
+    t.ZIndex = 10
+    t.Parent = frame
+
+    local v = Instance.new("TextLabel")
+    v.Name = "Value"
+    v.Size = UDim2.new(1, -24, 0, 18)
+    v.Position = UDim2.new(0, 18, 0, 24)
+    v.BackgroundTransparency = 1
+    v.Text = value
+    v.TextColor3 = C.text
+    v.TextSize = 14
+    v.Font = Enum.Font.GothamBold
+    v.TextXAlignment = Enum.TextXAlignment.Left
+    v.ZIndex = 10
+    v.Parent = frame
+    return frame
+end
+
+-- ============================
+-- KEY PAGE (Tab 1)
+-- ============================
+local keyPage = tabPages[1]
+makeSection(keyPage, "Authentication Required", 1)
+
+local keyInfo = Instance.new("Frame")
+keyInfo.Size = UDim2.new(1, 0, 0, 58)
+keyInfo.BackgroundColor3 = C.card
+keyInfo.BorderSizePixel = 0
+keyInfo.ZIndex = 9
+keyInfo.LayoutOrder = 2
+keyInfo.Parent = keyPage
+corner(keyInfo, 8)
+
+local keyInfoBar = Instance.new("Frame")
+keyInfoBar.Size = UDim2.new(0, 3, 0.6, 0)
+keyInfoBar.Position = UDim2.new(0, 8, 0.2, 0)
+keyInfoBar.BackgroundColor3 = C.accent
+keyInfoBar.BorderSizePixel = 0
+keyInfoBar.ZIndex = 10
+keyInfoBar.Parent = keyInfo
+corner(keyInfoBar, 2)
+
+local keyInfoTitle = Instance.new("TextLabel")
+keyInfoTitle.Size = UDim2.new(1, -24, 0, 16)
+keyInfoTitle.Position = UDim2.new(0, 18, 0, 10)
+keyInfoTitle.BackgroundTransparency = 1
+keyInfoTitle.Text = "Enter your key to unlock all features"
+keyInfoTitle.TextColor3 = C.text
+keyInfoTitle.TextSize = 12
+keyInfoTitle.Font = Enum.Font.GothamSemibold
+keyInfoTitle.TextXAlignment = Enum.TextXAlignment.Left
+keyInfoTitle.ZIndex = 10
+keyInfoTitle.Parent = keyInfo
+
+local keyInfoDesc = Instance.new("TextLabel")
+keyInfoDesc.Size = UDim2.new(1, -24, 0, 14)
+keyInfoDesc.Position = UDim2.new(0, 18, 0, 30)
+keyInfoDesc.BackgroundTransparency = 1
+keyInfoDesc.Text = "All tabs are locked until a valid key is provided."
+keyInfoDesc.TextColor3 = C.textMuted
+keyInfoDesc.TextSize = 10
+keyInfoDesc.Font = Enum.Font.Gotham
+keyInfoDesc.TextXAlignment = Enum.TextXAlignment.Left
+keyInfoDesc.ZIndex = 10
+keyInfoDesc.Parent = keyInfo
+
+local keyInputFrame = Instance.new("Frame")
+keyInputFrame.Size = UDim2.new(1, 0, 0, 38)
+keyInputFrame.BackgroundColor3 = C.input
+keyInputFrame.BorderSizePixel = 0
+keyInputFrame.ZIndex = 9
+keyInputFrame.LayoutOrder = 3
+keyInputFrame.Parent = keyPage
+corner(keyInputFrame, 8)
+
+local keyInputStroke = stroke(keyInputFrame, C.inputBorder, 1, 0.4)
+
+local keyInput = Instance.new("TextBox")
+keyInput.Size = UDim2.new(1, -20, 1, 0)
+keyInput.Position = UDim2.new(0, 10, 0, 0)
+keyInput.BackgroundTransparency = 1
+keyInput.Text = ""
+keyInput.PlaceholderText = "Enter key here..."
+keyInput.PlaceholderColor3 = C.textMuted
+keyInput.TextColor3 = C.text
+keyInput.TextSize = 13
+keyInput.Font = Enum.Font.GothamSemibold
+keyInput.TextXAlignment = Enum.TextXAlignment.Left
+keyInput.ClearTextOnFocus = false
+keyInput.ZIndex = 10
+keyInput.Parent = keyInputFrame
+
+keyInput.Focused:Connect(function()
+    tw(keyInputStroke, 0.2, {Color = C.accent, Transparency = 0})
+end)
+keyInput.FocusLost:Connect(function()
+    tw(keyInputStroke, 0.2, {Color = C.inputBorder, Transparency = 0.4})
+end)
+
+local keyStatus = Instance.new("TextLabel")
+keyStatus.Size = UDim2.new(1, 0, 0, 16)
+keyStatus.BackgroundTransparency = 1
+keyStatus.Text = ""
+keyStatus.TextColor3 = C.red
+keyStatus.TextSize = 11
+keyStatus.Font = Enum.Font.GothamSemibold
+keyStatus.TextXAlignment = Enum.TextXAlignment.Left
+keyStatus.ZIndex = 10
+keyStatus.LayoutOrder = 4
+keyStatus.Parent = keyPage
+
+local keySubmit = Instance.new("TextButton")
+keySubmit.Size = UDim2.new(1, 0, 0, 38)
+keySubmit.BackgroundColor3 = C.accent
+keySubmit.BorderSizePixel = 0
+keySubmit.Text = ""
+keySubmit.AutoButtonColor = false
+keySubmit.ZIndex = 9
+keySubmit.LayoutOrder = 5
+keySubmit.Parent = keyPage
+corner(keySubmit, 8)
+
+local keySubmitText = Instance.new("TextLabel")
+keySubmitText.Size = UDim2.new(1, 0, 1, 0)
+keySubmitText.BackgroundTransparency = 1
+keySubmitText.Text = "Validate Key"
+keySubmitText.TextColor3 = C.white
+keySubmitText.TextSize = 13
+keySubmitText.Font = Enum.Font.GothamBold
+keySubmitText.ZIndex = 10
+keySubmitText.Parent = keySubmit
+
+keySubmit.MouseEnter:Connect(function() tw(keySubmit, 0.15, {BackgroundColor3 = C.accentHover}) end)
+keySubmit.MouseLeave:Connect(function() tw(keySubmit, 0.15, {BackgroundColor3 = C.accent}) end)
+
+local keyCopyBtn = Instance.new("TextButton")
+keyCopyBtn.Size = UDim2.new(1, 0, 0, 34)
+keyCopyBtn.BackgroundColor3 = C.card
+keyCopyBtn.BorderSizePixel = 0
+keyCopyBtn.Text = ""
+keyCopyBtn.AutoButtonColor = false
+keyCopyBtn.ZIndex = 9
+keyCopyBtn.LayoutOrder = 6
+keyCopyBtn.Parent = keyPage
+corner(keyCopyBtn, 8)
+
+local keyCopyText = Instance.new("TextLabel")
+keyCopyText.Size = UDim2.new(1, 0, 1, 0)
+keyCopyText.BackgroundTransparency = 1
+keyCopyText.Text = "Get Key"
+keyCopyText.TextColor3 = C.textDim
+keyCopyText.TextSize = 11
+keyCopyText.Font = Enum.Font.GothamSemibold
+keyCopyText.ZIndex = 10
+keyCopyText.Parent = keyCopyBtn
+
+keyCopyBtn.MouseEnter:Connect(function() tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.cardHover}) end)
+keyCopyBtn.MouseLeave:Connect(function() tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.card}) end)
+keyCopyBtn.MouseButton1Click:Connect(function()
+    pcall(function() setclipboard("https://spoo.me/key") end)
+    keyCopyText.Text = "Copied to clipboard!"
+    keyCopyText.TextColor3 = C.green
+    task.wait(1.5)
+    keyCopyText.Text = "Get Key"
+    keyCopyText.TextColor3 = C.textDim
+end)
+
+local function validateKey()
+    local entered = keyInput.Text
+    if entered == "" then
+        keyStatus.Text = "Please enter a key."
+        keyStatus.TextColor3 = C.yellow
+        return
+    end
+
+    keySubmitText.Text = "Checking..."
+    tw(keySubmit, 0.15, {BackgroundColor3 = C.textMuted})
+    task.wait(0.8)
+
+    if entered == CORRECT_KEY then
+        keyStatus.Text = "Key validated successfully!"
+        keyStatus.TextColor3 = C.green
+        tw(keySubmit, 0.3, {BackgroundColor3 = C.green})
+        keySubmitText.Text = "Unlocked!"
+        task.wait(0.5)
+        unlockAllTabs()
+        task.wait(0.3)
+        removeKeyTab()
+        selectTab(1)
+    else
+        keyStatus.Text = "Invalid key. Please try again."
+        keyStatus.TextColor3 = C.red
+        tw(keySubmit, 0.2, {BackgroundColor3 = C.red})
+        keySubmitText.Text = "Invalid Key"
+
+        local orig = keyInputFrame.Position
+        for _ = 1, 3 do
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, 6, 0, 0)}, Enum.EasingStyle.Linear)
+            task.wait(0.04)
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, -6, 0, 0)}, Enum.EasingStyle.Linear)
+            task.wait(0.04)
+        end
+        tw(keyInputFrame, 0.04, {Position = orig}, Enum.EasingStyle.Linear)
+
+        task.wait(0.6)
+        tw(keySubmit, 0.3, {BackgroundColor3 = C.accent})
+        keySubmitText.Text = "Validate Key"
+    end
+end
+
+keySubmit.MouseButton1Click:Connect(validateKey)
+keyInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then validateKey() end
+end)
+
+-- ============================
+-- HOME (Tab 2)
+-- ============================
+local home = tabPages[2]
+makeSection(home, "Overview", 1)
+makeInfoCard(home, "Player", LocalPlayer.Name, C.accent, 2)
+
+-- Player count
+local playerCount = #Players:GetPlayers()
+local maxPlayers = Players.MaxPlayers
+makeInfoCard(home, "Players Online", playerCount .. " / " .. maxPlayers, C.green, 3)
+
+-- Server uptime
+local serverAge = workspace.DistributedGameTime
+local function formatUptime(seconds)
+    local hrs = math.floor(seconds / 3600)
+    local mins = math.floor((seconds % 3600) / 60)
+    local secs = math.floor(seconds % 60)
+    if hrs > 0 then
+        return string.format("%dh %dm %ds", hrs, mins, secs)
+    elseif mins > 0 then
+        return string.format("%dm %ds", mins, secs)
+    else
+        return string.format("%ds", secs)
+    end
+end
+
+local uptimeCard = makeInfoCard(home, "Server Uptime", formatUptime(serverAge), C.cyan, 5)
+
+-- Update uptime and player count live
+task.spawn(function()
+    while task.wait(1) do
+        pcall(function()
+            local val = uptimeCard:FindFirstChild("Value")
+            if val then
+                val.Text = formatUptime(workspace.DistributedGameTime)
+            end
+        end)
+    end
+end)
+
+-- Update player count when someone joins/leaves
+local playerCountCard = nil
+for _, child in ipairs(home:GetChildren()) do
+    if child:IsA("Frame") then
+        local valLabel = child:FindFirstChild("Value")
+        if valLabel and valLabel.Text:find("/") then
+            playerCountCard = child
+            break
+        end
+    end
+end
+
+local function updatePlayerCount()
+    pcall(function()
+        if playerCountCard then
+            local val = playerCountCard:FindFirstChild("Value")
+            if val then
+                val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers
+            end
+        end
+    end)
+end
+
+Players.PlayerAdded:Connect(updatePlayerCount)
+Players.PlayerRemoving:Connect(updatePlayerCount)
+
+makeInfoCard(home, "Version", "v1.0.0", C.yellow, 6)
+local gameName = "Unknown"
+pcall(function()
+    gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+end)
+makeInfoCard(home, "Game", gameName, C.orange, 7)
+
+-- ============================
+-- COMBAT (Tab 3)
+-- ============================
+local combat = tabPages[3]
+
+-- Support note
+local supportNote = Instance.new("Frame")
+supportNote.Size = UDim2.new(1, 0, 0, 52)
+supportNote.BackgroundColor3 = C.card
+supportNote.BorderSizePixel = 0
+supportNote.ZIndex = 9
+supportNote.LayoutOrder = 1
+supportNote.Parent = combat
+corner(supportNote, 8)
+
+local supportBar = Instance.new("Frame")
+supportBar.Size = UDim2.new(0, 3, 0.6, 0)
+supportBar.Position = UDim2.new(0, 8, 0.2, 0)
+supportBar.BackgroundColor3 = C.yellow
+supportBar.BorderSizePixel = 0
+supportBar.ZIndex = 10
+supportBar.Parent = supportNote
+corner(supportBar, 2)
+
+local supportTitle = Instance.new("TextLabel")
+supportTitle.Size = UDim2.new(1, -24, 0, 14)
+supportTitle.Position = UDim2.new(0, 18, 0, 8)
+supportTitle.BackgroundTransparency = 1
+supportTitle.Text = "SUPPORTED WEAPONS"
+supportTitle.TextColor3 = C.yellow
+supportTitle.TextSize = 10
+supportTitle.Font = Enum.Font.GothamBold
+supportTitle.TextXAlignment = Enum.TextXAlignment.Left
+supportTitle.ZIndex = 10
+supportTitle.Parent = supportNote
+
+local supportDesc = Instance.new("TextLabel")
+supportDesc.Size = UDim2.new(1, -24, 0, 14)
+supportDesc.Position = UDim2.new(0, 18, 0, 26)
+supportDesc.BackgroundTransparency = 1
+supportDesc.Text = "Whig Gun Deluxe (Poison)  |  HEX Spitter"
+supportDesc.TextColor3 = C.textDim
+supportDesc.TextSize = 11
+supportDesc.Font = Enum.Font.GothamSemibold
+supportDesc.TextXAlignment = Enum.TextXAlignment.Left
+supportDesc.ZIndex = 10
+supportDesc.Parent = supportNote
+
+-- Combat backend
+local sdFolder = workspace:WaitForChild("SD")
+local allowedTools = {
+    ["HEX Spitter"] = true,
+    ["Whig gun deluxe"] = true,
+}
+
+local activeLoops = {}
+local autoAttackEnabled = false
+local infAttackEnabled = false
+local cachedRemote = nil
+local lastRemoteCheck = 0
+local REMOTE_CACHE_TIME = 0.3
+
+local function getRemote()
+    local now = tick()
+    if cachedRemote and (now - lastRemoteCheck) < REMOTE_CACHE_TIME then
+        if cachedRemote.Parent then
+            return cachedRemote
+        end
+        cachedRemote = nil
+    end
+
+    local character = LocalPlayer.Character
+    if not character then
+        character = LocalPlayer.CharacterAdded:Wait()
+    end
+
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+
+    local searchLocations = {character}
+    if backpack then
+        table.insert(searchLocations, backpack)
+    end
+
+    for _, location in ipairs(searchLocations) do
+        for toolName in pairs(allowedTools) do
+            local tool = location:FindFirstChild(toolName)
+            if tool then
+                local remotes = tool:FindFirstChild("Remotes")
+                if remotes then
+                    local serverControl = remotes:FindFirstChild("ServerControl")
+                    if serverControl then
+                        cachedRemote = serverControl
+                        lastRemoteCheck = now
+                        return serverControl
+                    end
+                end
+            end
+        end
+    end
+
+    cachedRemote = nil
+    return nil
+end
+
+local function waitForRemote(timeout)
+    local start = tick()
+    timeout = timeout or 10
+    while (tick() - start) < timeout do
+        local remote = getRemote()
+        if remote then return remote end
+        task.wait(0.2)
+    end
+    return nil
+end
+
+local function getTorso(target)
+    return target:FindFirstChild("Torso")
+        or target:FindFirstChild("HumanoidRootPart")
+        or target:FindFirstChild("Head")
+end
+
+local function isValidTarget(target)
+    if not target or not target.Parent then return false end
+    if target.Parent ~= sdFolder then return false end
+    if not getTorso(target) then return false end
+    local humanoid = target:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.Health <= 0 then return false end
+    return true
+end
+
+local function startTargetLoop(target)
+    if activeLoops[target] then return end
+    activeLoops[target] = true
+
+    task.spawn(function()
+        local failCount = 0
+
+        while autoAttackEnabled and isValidTarget(target) do
+            local remote = getRemote()
+
+            if not remote then
+                task.wait(0.5)
+                remote = waitForRemote(5)
+                if not remote then
+                    task.wait(1)
+                    continue
+                end
+            end
+
+            local torso = getTorso(target)
+            if torso then
+                local ok = pcall(function()
+                    remote:InvokeServer("RayHit", {
+                        Hit = torso,
+                        Position = torso.Position,
+                    })
+                end)
+
+                if ok then
+                    failCount = 0
+                else
+                    failCount = failCount + 1
+                    cachedRemote = nil
+                    if failCount >= 20 then
+                        task.wait(2)
+                        failCount = 0
+                    end
+                end
+            end
+
+            task.wait(0.01)
+        end
+
+        activeLoops[target] = nil
+    end)
+end
+
+local function startAllLoops()
+    for _, child in ipairs(sdFolder:GetChildren()) do
+        if isValidTarget(child) and not activeLoops[child] then
+            startTargetLoop(child)
+        end
+    end
+end
+
+local function stopEverything()
+    autoAttackEnabled = false
+    infAttackEnabled = false
+    cachedRemote = nil
+    task.delay(0.5, function()
+        table.clear(activeLoops)
+    end)
+end
+
+sdFolder.ChildAdded:Connect(function(newChild)
+    task.wait(0.15)
+    if autoAttackEnabled and isValidTarget(newChild) and not activeLoops[newChild] then
+        startTargetLoop(newChild)
+    end
+end)
+
+-- Extra CharacterAdded for combat specifically
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    cachedRemote = nil
+    newChar:WaitForChild("Humanoid")
+    task.wait(2)
+    if autoAttackEnabled then
+        waitForRemote(10)
+        startAllLoops()
+    end
+end)
+
+task.spawn(function()
+    while task.wait(3) do
+        for target, _ in pairs(activeLoops) do
+            if not isValidTarget(target) then
+                activeLoops[target] = nil
+            end
+        end
+        if autoAttackEnabled then
+            for _, child in ipairs(sdFolder:GetChildren()) do
+                if isValidTarget(child) and not activeLoops[child] then
+                    startTargetLoop(child)
+                end
+            end
+        end
+    end
+end)
+
+-- Combat UI
+makeSection(combat, "Auto Attack (Slow)", 2)
+
+local slowNote = Instance.new("Frame")
+slowNote.Size = UDim2.new(1, 0, 0, 32)
+slowNote.BackgroundColor3 = C.card
+slowNote.BorderSizePixel = 0
+slowNote.ZIndex = 9
+slowNote.LayoutOrder = 3
+slowNote.Parent = combat
+corner(slowNote, 8)
+
+local slowBar = Instance.new("Frame")
+slowBar.Size = UDim2.new(0, 3, 0.6, 0)
+slowBar.Position = UDim2.new(0, 8, 0.2, 0)
+slowBar.BackgroundColor3 = C.orange
+slowBar.BorderSizePixel = 0
+slowBar.ZIndex = 10
+slowBar.Parent = slowNote
+corner(slowBar, 2)
+
+local slowText = Instance.new("TextLabel")
+slowText.Size = UDim2.new(1, -24, 1, 0)
+slowText.Position = UDim2.new(0, 18, 0, 0)
+slowText.BackgroundTransparency = 1
+slowText.Text = "Note : Loop Mode Attack One Hit Per Tick. Use For Alt Support."
+slowText.TextColor3 = C.orange
+slowText.TextSize = 10
+slowText.Font = Enum.Font.GothamSemibold
+slowText.TextXAlignment = Enum.TextXAlignment.Left
+slowText.ZIndex = 10
+slowText.Parent = slowNote
+
+makeToggle(combat, "Auto Attack (Loop)", false, 4, function(enabled)
+    if enabled then
+        autoAttackEnabled = true
+        startAllLoops()
+    else
+        autoAttackEnabled = false
+        cachedRemote = nil
+        task.delay(0.5, function()
+            table.clear(activeLoops)
+        end)
+    end
+end)
+
+makeSection(combat, "Burst Attack", 5)
+
+makeButton(combat, "Attack All (Infinite)", "This Can Stack But If To Much May Cause A Lag.", 6, function()
+    if infAttackEnabled then return end
+    infAttackEnabled = true
+
+    task.spawn(function()
+        while infAttackEnabled do
+            local remote = getRemote()
+
+            if not remote then
+                task.wait(0.5)
+                remote = waitForRemote(10)
+                if not remote then
+                    task.wait(1)
+                    continue
+                end
+            end
+
+            local targets = sdFolder:GetChildren()
+            for _, child in ipairs(targets) do
+                if not infAttackEnabled then break end
+                if isValidTarget(child) then
+                    local torso = getTorso(child)
+                    if torso then
+                        local ok = pcall(function()
+                            remote:InvokeServer("RayHit", {
+                                Hit = torso,
+                                Position = torso.Position,
+                            })
+                        end)
+                        if not ok then
+                            cachedRemote = nil
+                            break
+                        end
+                    end
+                end
+            end
+
+            task.wait(0.01)
+        end
+    end)
+end)
+
+makeSection(combat, "Controls", 7)
+
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(1, 0, 0, 40)
+stopBtn.BackgroundColor3 = C.red
+stopBtn.BorderSizePixel = 0
+stopBtn.Text = ""
+stopBtn.AutoButtonColor = false
+stopBtn.ZIndex = 9
+stopBtn.LayoutOrder = 8
+stopBtn.Parent = combat
+corner(stopBtn, 8)
+
+local stopLabel = Instance.new("TextLabel")
+stopLabel.Size = UDim2.new(1, 0, 1, 0)
+stopLabel.BackgroundTransparency = 1
+stopLabel.Text = "STOP ALL ATTACKS"
+stopLabel.TextColor3 = C.white
+stopLabel.TextSize = 13
+stopLabel.Font = Enum.Font.GothamBold
+stopLabel.ZIndex = 10
+stopLabel.Parent = stopBtn
+
+stopBtn.MouseEnter:Connect(function()
+    tw(stopBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)})
+end)
+stopBtn.MouseLeave:Connect(function()
+    tw(stopBtn, 0.15, {BackgroundColor3 = C.red})
+end)
+stopBtn.MouseButton1Click:Connect(function()
+    stopEverything()
+    tw(stopBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
+    stopLabel.Text = "STOPPED"
+    task.wait(0.3)
+    tw(stopBtn, 0.25, {BackgroundColor3 = C.red})
+    task.wait(0.5)
+    stopLabel.Text = "STOP ALL ATTACKS"
+end)
+
+-- ============================
+-- PLAYER (Tab 4)
+-- ============================
+local playerTab = tabPages[4]
+makeSection(playerTab, "Speed & Jump", 1)
+makeSlider(playerTab, "Walk Speed", 16, 500, 16, 2, function(v)
+    playerSettings.walkSpeed = v
+    playerSettings.walkSpeedEnabled = (v ~= 16)
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = v
+        end
+    end)
+end)
+makeSlider(playerTab, "Jump Power", 50, 500, 50, 3, function(v)
+    playerSettings.jumpPower = v
+    playerSettings.jumpPowerEnabled = (v ~= 50)
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.JumpPower = v
+        end
+    end)
+end)
+
+-- ============================
+-- TELEPORT (Tab 5)
+-- ============================
+local teleport = tabPages[5]
+makeSection(teleport, "Locations", 1)
+makeTeleportButton(teleport, "Spawn", -117, 4, -29, C.green, 2)
+makeTeleportButton(teleport, "Lab", -116, 3, 111, C.cyan, 3)
+makeTeleportButton(teleport, "Deposit DNA", -122, 4, 142, C.orange, 4)
+makeTeleportButton(teleport, "House", -203, 8, 10, C.pink, 5)
+makeTeleportButton(teleport, "Boss Spawn", -110, 3, -361, C.red, 6, "Note: Some bosses spawn here")
+
+makeSection(teleport, "Canon Bosses", 7)
+makeTeleportButton(teleport, "Speed Demon", -135, 3, -31, C.white, 8)
+makeTeleportButton(teleport, "The Whig", -151, 4, -31, C.blue, 9)
+makeTeleportButton(teleport, "The Whig Brother", -164, 4, -30, C.teal, 10)
+makeTeleportButton(teleport, "Ahat", -177, 4, -30, C.purple, 11)
+makeTeleportButton(teleport, "God Demon", -192, 4, -29, C.red, 12)
+
+makeSection(teleport, "Non-Canon Bosses", 13)
+makeTeleportButton(teleport, "Scythe", -99, 4, -30, C.black, 14)
+makeTeleportButton(teleport, "Shockwave", -83, 4, -30, C.purple, 15)
+makeTeleportButton(teleport, "Saber", -69, 4, -29, C.gray, 16)
+
+makeSection(teleport, "Other", 17)
+makeTeleportButton(teleport, "Testing", 130, 4, 71, C.pink, 18, "Note: VIP Server Only")
+
+-- ============================
+-- SETTINGS (Tab 6)
+-- ============================
+local settings = tabPages[6]
+makeSection(settings, "GUI Settings", 1)
+makeToggle(settings, "Notifications", true, 2, function(v) end)
+makeToggle(settings, "Sound Effects", false, 3, function(v) end)
+makeSlider(settings, "GUI Opacity", 0, 100, 95, 4, function(v)
+    Main.BackgroundTransparency = 1 - (v / 100)
+end)
+makeSection(settings, "Danger Zone", 5)
+makeButton(settings, "Reset All Settings", "Restore default values", 6, function()
+    playerSettings.walkSpeed = 16
+    playerSettings.jumpPower = 50
+    playerSettings.walkSpeedEnabled = false
+    playerSettings.jumpPowerEnabled = false
+    pcall(function()
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid.WalkSpeed = 16
+            LocalPlayer.Character.Humanoid.JumpPower = 50
+        end
+    end)
+    stopEverything()
+end)
+makeButton(settings, "Destroy GUI", "Permanently remove the GUI", 7, function()
+    stopEverything()
+    playerSettings.walkSpeedEnabled = false
+    playerSettings.jumpPowerEnabled = false
+    pcall(function() Blur:Destroy() end)
+    ScreenGui:Destroy()
+end)
+
+-- ============================
+-- DRAGGING
+-- ============================
+local dragging, dragStart, startPos = false, nil, nil
+
+TopBar.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+TopBar.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+SidebarHeader.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+    end
+end)
+SidebarHeader.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- ============================
+-- MINIMIZE / CLOSE
+-- ============================
+local minimized = false
+local fullSize = UDim2.new(0, MAIN_W, 0, MAIN_H)
+local miniSize = UDim2.new(0, SIDEBAR_W + 120, 0, 42)
+
+MinBtn.MouseEnter:Connect(function() tw(MinBtn, 0.15, {BackgroundColor3 = C.cardHover}) end)
+MinBtn.MouseLeave:Connect(function() tw(MinBtn, 0.15, {BackgroundColor3 = C.card}) end)
+CloseBtn.MouseEnter:Connect(function() tw(CloseBtn, 0.15, {BackgroundColor3 = C.red}) end)
+CloseBtn.MouseLeave:Connect(function() tw(CloseBtn, 0.15, {BackgroundColor3 = C.card}) end)
+
+MinBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        tw(Main, 0.35, {Size = miniSize}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        MinBtn.Text = "+"
+    else
+        tw(Main, 0.35, {Size = fullSize}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        MinBtn.Text = "-"
+    end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    stopEverything()
+    playerSettings.walkSpeedEnabled = false
+    playerSettings.jumpPowerEnabled = false
+    tw(Main, 0.4, {
+        Size = UDim2.new(0, MAIN_W * 0.9, 0, MAIN_H * 0.9),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(
+            Main.Position.X.Scale,
+            Main.Position.X.Offset + MAIN_W * 0.05,
+            Main.Position.Y.Scale,
+            Main.Position.Y.Offset + MAIN_H * 0.05
+        )
+    }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    for _, d in ipairs(Main:GetDescendants()) do
+        pcall(function()
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                tw(d, 0.3, {TextTransparency = 1, BackgroundTransparency = 1})
+            elseif d:IsA("Frame") then
+                tw(d, 0.3, {BackgroundTransparency = 1})
+            elseif d:IsA("UIStroke") then
+                tw(d, 0.3, {Transparency = 1})
+            elseif d:IsA("ImageLabel") then
+                tw(d, 0.3, {ImageTransparency = 1, BackgroundTransparency = 1})
+            end
+        end)
+    end
+    task.wait(0.5)
+    pcall(function() Blur:Destroy() end)
+    ScreenGui:Destroy()
+end)
+
+-- ============================
+-- KEYBIND (RightShift)
+-- ============================
+local visible = true
+UserInputService.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        visible = not visible
+        Main.Visible = visible
+    end
+end)
+
+-- ============================
+-- INTRO SEQUENCE
+-- ============================
+task.spawn(function()
+    tw(Blur, 0.6, {Size = 18})
+    task.wait(0.3)
+
+    tw(IntroLogo, 0.5, {BackgroundTransparency = 0, ImageTransparency = 0}, Enum.EasingStyle.Back)
+    task.wait(0.4)
+
+    tw(IntroTitle, 0.6, {TextTransparency = 0})
+    task.wait(0.2)
+    tw(IntroWelcome, 0.6, {TextTransparency = 0})
+    task.wait(0.3)
+
+    tw(ProgressOuter, 0.3, {BackgroundTransparency = 0})
+    tw(ProgressInner, 0.3, {BackgroundTransparency = 0})
+    tw(IntroStatus, 0.3, {TextTransparency = 0})
+
+    local steps = {"Loading scripts...", "Removing anticheat...", "Setting up UI...", "Done!"}
+    for i, step in ipairs(steps) do
+        IntroStatus.Text = step
+        tw(ProgressInner, 0.4, {Size = UDim2.new(i / #steps, 0, 1, 0)}, Enum.EasingStyle.Quad)
+        task.wait(0.35)
+    end
+
+    IntroStatus.TextColor3 = C.green
+    task.wait(0.6)
+
+    tw(Intro, 0.5, {BackgroundTransparency = 1})
+    for _, c in ipairs(IntroCenter:GetDescendants()) do
+        pcall(function()
+            if c:IsA("TextLabel") then tw(c, 0.4, {TextTransparency = 1}) end
+            if c:IsA("Frame") then tw(c, 0.4, {BackgroundTransparency = 1}) end
+            if c:IsA("ImageLabel") then tw(c, 0.4, {ImageTransparency = 1, BackgroundTransparency = 1}) end
+        end)
+    end
+
+    tw(Blur, 0.5, {Size = 0})
+    task.wait(0.6)
+    Intro:Destroy()
+
+    Main.Visible = true
+    Main.BackgroundTransparency = 1
+    Main.Size = UDim2.new(0, MAIN_W * 0.85, 0, MAIN_H * 0.85)
+    Main.Position = UDim2.new(0.5, -MAIN_W * 0.425, 0.5, -MAIN_H * 0.425)
+
+    tw(Main, 0.5, {
+        BackgroundTransparency = 0.05,
+        Size = fullSize,
+        Position = UDim2.new(0.5, -MAIN_W / 2, 0.5, -MAIN_H / 2)
+    }, Enum.EasingStyle.Back)
+
+    tw(mainStroke, 0.5, {Transparency = 0.5})
+    tw(SidebarFrame, 0.4, {BackgroundTransparency = 0})
+    tw(SidebarFix, 0.4, {BackgroundTransparency = 0})
+
+    for _, d in ipairs(Main:GetDescendants()) do
+        pcall(function()
+            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                d.TextTransparency = 1
+                tw(d, 0.5, {TextTransparency = 0})
+            end
+            if d:IsA("ImageLabel") then
+                d.ImageTransparency = 1
+                tw(d, 0.5, {ImageTransparency = 0})
+            end
+        end)
+    end
+
+    task.wait(0.3)
+    selectTab(1)
+end)
