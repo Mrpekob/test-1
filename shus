@@ -13,7 +13,6 @@ pcall(function()
     if ac then ac:Destroy() end
 end)
 
--- Anti-cheat removal loop (continuous)
 task.spawn(function()
     while true do
         pcall(function()
@@ -66,7 +65,6 @@ local CORRECT_KEY = "god demon its ez using this script"
 local keyValidated = false
 local GAME_ICON = "rbxassetid://81424212403741"
 
--- Detect if on mobile
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 local C = {
@@ -309,6 +307,234 @@ end
 local function disableInstantProximity()
     if proximityConnection then proximityConnection:Disconnect() proximityConnection = nil end
     if proximityChildConnection then proximityChildConnection:Disconnect() proximityChildConnection = nil end
+end
+
+-- ============================
+-- AUTO REVIVE SYSTEM
+-- ============================
+local autoReviveEnabled = false
+local autoReviveThread = nil
+
+local REVIVE_DELAY = 0.2
+local CHECK_INTERVAL = 1
+local RETURN_AFTER_REVIVE = true
+local MAX_ATTEMPTS_PER_PLAYER = 20
+local RETRY_DELAY = 0.3
+
+-- Background proximity loop specifically for revive
+local reviveProximityThread = nil
+
+local function startReviveProximityLoop()
+    if reviveProximityThread then return end
+    reviveProximityThread = task.spawn(function()
+        while autoReviveEnabled and guiAlive do
+            for _, descendant in ipairs(workspace:GetDescendants()) do
+                if descendant:IsA("ProximityPrompt") then
+                    descendant.HoldDuration = 0
+                    descendant.MaxActivationDistance = 25
+                end
+            end
+            task.wait(1)
+        end
+        reviveProximityThread = nil
+    end)
+end
+
+local function stopReviveProximityLoop()
+    reviveProximityThread = nil
+end
+
+local function fireRevivePrompt(prompt)
+    if not prompt or not prompt.Parent then return false end
+    if fireproximityprompt then
+        fireproximityprompt(prompt)
+        return true
+    end
+    local oldHoldDuration = prompt.HoldDuration
+    prompt.HoldDuration = 0
+    prompt:InputHoldBegin()
+    task.wait()
+    prompt:InputHoldEnd()
+    prompt.HoldDuration = oldHoldDuration
+    return true
+end
+
+local function reviveHasHighlight(character)
+    if not character then return false end
+    for _, child in pairs(character:GetChildren()) do
+        if child:IsA("Highlight") then return true end
+    end
+    return false
+end
+
+local function reviveIsLocalPlayerAFK()
+    local success, result = pcall(function()
+        local playerGui = LocalPlayer:FindFirstChild("PlayerGui")
+        local playerStatus = playerGui.RobloxGui.PlayerListContainer.ScrollList[LocalPlayer.Name].BGFrame.PlayerName.PlayerStatus
+        if playerStatus:IsA("TextLabel") or playerStatus:IsA("TextBox") then
+            return playerStatus.Text ~= ""
+        end
+        return false
+    end)
+    return success and result or false
+end
+
+local function getRevivePrompt(character)
+    if not character then return nil end
+    local head = character:FindFirstChild("Head")
+    if not head then return nil end
+    for _, descendant in pairs(head:GetDescendants()) do
+        if descendant:IsA("ProximityPrompt") and string.find(string.lower(descendant.Name), "revive") then
+            return descendant
+        end
+    end
+    return nil
+end
+
+local function reviveIsInsideSD(character)
+    local SD = workspace:FindFirstChild("SD")
+    return SD and character.Parent == SD
+end
+
+local function reviveUntilDone(player, character)
+    local attempts = 0
+    print("[Auto Revive] Starting persistent revive on: " .. player.Name)
+
+    while attempts < MAX_ATTEMPTS_PER_PLAYER and autoReviveEnabled and guiAlive do
+
+        if reviveIsLocalPlayerAFK() then
+            print("[Auto Revive] YOU went AFK! Stopping revive on " .. player.Name)
+            return false
+        end
+
+        local currentChar = LocalPlayer.Character
+        if not currentChar then return false end
+
+        local HRP = currentChar:FindFirstChild("HumanoidRootPart")
+        if not HRP then return false end
+
+        -- Check if already revived
+        local freshChar = workspace:FindFirstChild(player.Name)
+        if not freshChar then return true end
+        if reviveIsInsideSD(freshChar) then return true end
+        if not reviveHasHighlight(freshChar) then
+            print("[Auto Revive] " .. player.Name .. " confirmed ALIVE!")
+            return true
+        end
+
+        attempts = attempts + 1
+        print("[Auto Revive] Attempt " .. attempts .. "/" .. MAX_ATTEMPTS_PER_PLAYER .. " on " .. player.Name)
+
+        local targetHead = freshChar:FindFirstChild("Head")
+        if not targetHead then
+            task.wait(RETRY_DELAY)
+            continue
+        end
+
+        -- Teleport next to target
+        HRP.CFrame = targetHead.CFrame * CFrame.new(0, 0, 2)
+        task.wait(REVIVE_DELAY)
+
+        -- Get fresh prompt and fire
+        local prompt = getRevivePrompt(freshChar)
+        if prompt then
+            fireRevivePrompt(prompt)
+            print("[Auto Revive] Fired prompt (attempt " .. attempts .. ")")
+        else
+            print("[Auto Revive] No prompt found on attempt " .. attempts)
+        end
+
+        task.wait(RETRY_DELAY)
+    end
+
+    if attempts >= MAX_ATTEMPTS_PER_PLAYER then
+        print("[Auto Revive] Gave up on " .. player.Name .. " after max attempts.")
+    end
+    return false
+end
+
+local function autoReviveLoop()
+    print("[Auto Revive] Loop started.")
+    while autoReviveEnabled and guiAlive do
+
+        local Character = LocalPlayer.Character
+        local HRP = Character and Character:FindFirstChild("HumanoidRootPart")
+
+        if not Character or not HRP then
+            task.wait(CHECK_INTERVAL)
+            continue
+        end
+
+        if reviveIsLocalPlayerAFK() then
+            task.wait(CHECK_INTERVAL)
+            continue
+        end
+
+        local originalPosition = HRP.CFrame
+        local playersToRevive = {}
+
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= LocalPlayer then
+                local char = workspace:FindFirstChild(player.Name)
+                if char and not reviveIsInsideSD(char) and reviveHasHighlight(char) then
+                    local prompt = getRevivePrompt(char)
+                    if prompt then
+                        table.insert(playersToRevive, {
+                            player = player,
+                            character = char,
+                        })
+                    end
+                end
+            end
+        end
+
+        if #playersToRevive > 0 then
+            print("[Auto Revive] Found " .. #playersToRevive .. " dead player(s).")
+            createNotification("Auto Revive", "Found " .. #playersToRevive .. " player(s) to revive!", 3, C.cyan)
+
+            for _, data in pairs(playersToRevive) do
+                if not autoReviveEnabled or not guiAlive then break end
+                if reviveIsLocalPlayerAFK() or not LocalPlayer.Character then break end
+
+                local freshChar = workspace:FindFirstChild(data.player.Name)
+                if not freshChar or reviveIsInsideSD(freshChar) or not reviveHasHighlight(freshChar) then
+                    continue
+                end
+
+                reviveUntilDone(data.player, freshChar)
+            end
+
+            if RETURN_AFTER_REVIVE then
+                local currentChar = LocalPlayer.Character
+                if currentChar then
+                    local currentHRP = currentChar:FindFirstChild("HumanoidRootPart")
+                    if currentHRP then
+                        currentHRP.CFrame = originalPosition
+                        print("[Auto Revive] Returned to original position.")
+                    end
+                end
+            end
+        end
+
+        task.wait(CHECK_INTERVAL)
+    end
+    print("[Auto Revive] Loop stopped.")
+end
+
+local function startAutoRevive()
+    if autoReviveThread then return end
+    autoReviveEnabled = true
+    startReviveProximityLoop()
+    autoReviveThread = task.spawn(autoReviveLoop)
+    createNotification("Auto Revive", "Auto revive enabled! Watching for dead players.", 3, C.green)
+end
+
+local function stopAutoRevive()
+    autoReviveEnabled = false
+    stopReviveProximityLoop()
+    autoReviveThread = nil
+    createNotification("Auto Revive", "Auto revive disabled.", 2, C.yellow)
+    print("[Auto Revive] Stopped.")
 end
 
 -- ============================
@@ -723,7 +949,7 @@ local function disableNameHider()
 end
 
 -- ============================
--- MAIN FRAME (MOBILE OPTIMIZED)
+-- MAIN FRAME
 -- ============================
 local SIDEBAR_W = isMobile and 100 or 140
 local MAIN_W = isMobile and math.min(ScreenGui.AbsoluteSize.X - 20, 450) or 520
@@ -743,7 +969,6 @@ Main.Parent = ScreenGui
 corner(Main, isMobile and 12 or 10)
 stroke(Main, C.divider, isMobile and 2 or 1, 0.6)
 
--- Shadow effect for depth
 local Shadow = Instance.new("ImageLabel")
 Shadow.Name = "Shadow"
 Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1182,7 +1407,7 @@ for i, data in ipairs(tabData) do
 end
 
 -- ============================
--- UI BUILDERS (MOBILE OPTIMIZED)
+-- UI BUILDERS
 -- ============================
 local function makeSection(parent, title, order)
     local frame = Instance.new("Frame")
@@ -1529,20 +1754,17 @@ local function makeSlider(parent, text, min, max, default, order, callback)
     end
 
     inputBtn.MouseButton1Down:Connect(function() sliding = true end)
-    
     UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then 
-            sliding = false 
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            sliding = false
         end
     end)
-    
     UserInputService.InputChanged:Connect(function(input)
         if not guiAlive then return end
-        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then 
-            update(input.Position) 
+        if sliding and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input.Position)
         end
     end)
-    
     inputBtn.MouseButton1Click:Connect(function()
         if not guiAlive then return end
         local mousePos = UserInputService:GetMouseLocation()
@@ -1674,15 +1896,11 @@ keyInput.ClearTextOnFocus = false
 keyInput.ZIndex = 10
 keyInput.Parent = keyInputFrame
 
-keyInput.Focused:Connect(function() 
-    if guiAlive then 
-        tw(keyInputStroke, 0.2, {Color = C.accent, Transparency = 0}) 
-    end 
+keyInput.Focused:Connect(function()
+    if guiAlive then tw(keyInputStroke, 0.2, {Color = C.accent, Transparency = 0}) end
 end)
-keyInput.FocusLost:Connect(function() 
-    if guiAlive then 
-        tw(keyInputStroke, 0.2, {Color = C.inputBorder, Transparency = 0.4}) 
-    end 
+keyInput.FocusLost:Connect(function()
+    if guiAlive then tw(keyInputStroke, 0.2, {Color = C.inputBorder, Transparency = 0.4}) end
 end)
 
 local keyStatus = Instance.new("TextLabel")
@@ -1763,10 +1981,10 @@ end)
 local function validateKey()
     if not guiAlive then return end
     local entered = keyInput.Text
-    if entered == "" then 
-        keyStatus.Text = "Please enter a key." 
-        keyStatus.TextColor3 = C.yellow 
-        return 
+    if entered == "" then
+        keyStatus.Text = "Please enter a key."
+        keyStatus.TextColor3 = C.yellow
+        return
     end
     keySubmitText.Text = "Checking..."
     tw(keySubmit, 0.15, {BackgroundColor3 = C.textMuted})
@@ -1792,9 +2010,9 @@ local function validateKey()
         keySubmitText.Text = "Invalid Key"
         local orig = keyInputFrame.Position
         for _ = 1, 3 do
-            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, 8, 0, 0)}, Enum.EasingStyle.Linear) 
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, 8, 0, 0)}, Enum.EasingStyle.Linear)
             task.wait(0.04)
-            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, -8, 0, 0)}, Enum.EasingStyle.Linear) 
+            tw(keyInputFrame, 0.04, {Position = orig + UDim2.new(0, -8, 0, 0)}, Enum.EasingStyle.Linear)
             task.wait(0.04)
         end
         tw(keyInputFrame, 0.04, {Position = orig}, Enum.EasingStyle.Linear)
@@ -1806,8 +2024,8 @@ local function validateKey()
 end
 
 keySubmit.MouseButton1Click:Connect(validateKey)
-keyInput.FocusLost:Connect(function(enterPressed) 
-    if enterPressed then validateKey() end 
+keyInput.FocusLost:Connect(function(enterPressed)
+    if enterPressed then validateKey() end
 end)
 
 -- ============================
@@ -1832,9 +2050,9 @@ local uptimeCard = makeInfoCard(home, "Server Uptime", formatUptime(workspace.Di
 task.spawn(function()
     while task.wait(1) do
         if not guiAlive then break end
-        pcall(function() 
-            local val = uptimeCard:FindFirstChild("Value") 
-            if val then val.Text = formatUptime(workspace.DistributedGameTime) end 
+        pcall(function()
+            local val = uptimeCard:FindFirstChild("Value")
+            if val then val.Text = formatUptime(workspace.DistributedGameTime) end
         end)
     end
 end)
@@ -1843,30 +2061,30 @@ local playerCountCard = nil
 for _, child in ipairs(home:GetChildren()) do
     if child:IsA("Frame") then
         local valLabel = child:FindFirstChild("Value")
-        if valLabel and valLabel.Text:find("/") then 
-            playerCountCard = child 
-            break 
+        if valLabel and valLabel.Text:find("/") then
+            playerCountCard = child
+            break
         end
     end
 end
 
 Players.PlayerAdded:Connect(function()
     if not guiAlive then return end
-    pcall(function() 
-        if playerCountCard then 
-            local val = playerCountCard:FindFirstChild("Value") 
-            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end 
-        end 
+    pcall(function()
+        if playerCountCard then
+            local val = playerCountCard:FindFirstChild("Value")
+            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end
+        end
     end)
 end)
 
 Players.PlayerRemoving:Connect(function()
     if not guiAlive then return end
-    pcall(function() 
-        if playerCountCard then 
-            local val = playerCountCard:FindFirstChild("Value") 
-            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end 
-        end 
+    pcall(function()
+        if playerCountCard then
+            local val = playerCountCard:FindFirstChild("Value")
+            if val then val.Text = #Players:GetPlayers() .. " / " .. Players.MaxPlayers end
+        end
     end)
 end)
 
@@ -1879,7 +2097,7 @@ updateHomePlayerCard = function()
     pcall(function()
         local valLabel = homePlayerCard:FindFirstChild("Value")
         if valLabel then
-            if nameHiderEnabled then valLabel.Text = customFakeName 
+            if nameHiderEnabled then valLabel.Text = customFakeName
             else valLabel.Text = LocalPlayer.Name end
         end
     end)
@@ -1960,10 +2178,10 @@ local function getRemote()
                 local remotes = tool:FindFirstChild("Remotes")
                 if remotes then
                     local serverControl = remotes:FindFirstChild("ServerControl")
-                    if serverControl then 
-                        cachedRemote = serverControl 
-                        lastRemoteCheck = now 
-                        return serverControl 
+                    if serverControl then
+                        cachedRemote = serverControl
+                        lastRemoteCheck = now
+                        return serverControl
                     end
                 end
             end
@@ -2005,28 +2223,28 @@ local function startTargetLoop(target)
         local failCount = 0
         while guiAlive and autoAttackEnabled and isValidTarget(target) do
             local remote = getRemote()
-            if not remote then 
-                task.wait(0.5) 
-                remote = waitForRemote(5) 
-                if not remote then 
-                    task.wait(1) 
-                    continue 
-                end 
+            if not remote then
+                task.wait(0.5)
+                remote = waitForRemote(5)
+                if not remote then
+                    task.wait(1)
+                    continue
+                end
             end
             local torso = getTorso(target)
             if torso then
-                local ok = pcall(function() 
-                    remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) 
+                local ok = pcall(function()
+                    remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position})
                 end)
-                if ok then 
+                if ok then
                     failCount = 0
-                else 
-                    failCount += 1 
-                    cachedRemote = nil 
-                    if failCount >= 20 then 
-                        task.wait(2) 
-                        failCount = 0 
-                    end 
+                else
+                    failCount += 1
+                    cachedRemote = nil
+                    if failCount >= 20 then
+                        task.wait(2)
+                        failCount = 0
+                    end
                 end
             end
             task.wait(0.01)
@@ -2038,8 +2256,8 @@ end
 local function startAllLoops()
     if not guiAlive then return end
     for _, child in ipairs(sdFolder:GetChildren()) do
-        if isValidTarget(child) and not activeLoops[child] then 
-            startTargetLoop(child) 
+        if isValidTarget(child) and not activeLoops[child] then
+            startTargetLoop(child)
         end
     end
 end
@@ -2055,8 +2273,8 @@ sdFolder.ChildAdded:Connect(function(newChild)
     if not guiAlive then return end
     task.wait(0.15)
     createNotification("Entity Spawn", newChild.Name .. " has spawned", 3, C.cyan)
-    if autoAttackEnabled and isValidTarget(newChild) and not activeLoops[newChild] then 
-        startTargetLoop(newChild) 
+    if autoAttackEnabled and isValidTarget(newChild) and not activeLoops[newChild] then
+        startTargetLoop(newChild)
     end
 end)
 
@@ -2065,24 +2283,24 @@ LocalPlayer.CharacterAdded:Connect(function(newChar)
     cachedRemote = nil
     newChar:WaitForChild("Humanoid")
     task.wait(2)
-    if guiAlive and autoAttackEnabled then 
-        waitForRemote(10) 
-        startAllLoops() 
+    if guiAlive and autoAttackEnabled then
+        waitForRemote(10)
+        startAllLoops()
     end
 end)
 
 task.spawn(function()
     while task.wait(3) do
         if not guiAlive then break end
-        for target, _ in pairs(activeLoops) do 
-            if not isValidTarget(target) then 
-                activeLoops[target] = nil 
-            end 
+        for target, _ in pairs(activeLoops) do
+            if not isValidTarget(target) then
+                activeLoops[target] = nil
+            end
         end
         if autoAttackEnabled then
             for _, child in ipairs(sdFolder:GetChildren()) do
-                if isValidTarget(child) and not activeLoops[child] then 
-                    startTargetLoop(child) 
+                if isValidTarget(child) and not activeLoops[child] then
+                    startTargetLoop(child)
                 end
             end
         end
@@ -2124,21 +2342,18 @@ slowText.Parent = slowNote
 
 makeToggle(combat, "Auto Attack (Loop)", false, 4, function(enabled)
     if not guiAlive then return end
-    if enabled then 
-        autoAttackEnabled = true 
+    if enabled then
+        autoAttackEnabled = true
         startAllLoops()
         createNotification("Auto Attack", "Loop mode enabled", 2, C.green)
-    else 
-        autoAttackEnabled = false 
-        cachedRemote = nil 
+    else
+        autoAttackEnabled = false
+        cachedRemote = nil
         task.delay(0.5, function() table.clear(activeLoops) end)
         createNotification("Auto Attack", "Loop mode disabled", 2, C.yellow)
     end
 end)
 
--- ============================
--- BURST ATTACK SECTION
--- ============================
 makeSection(combat, "Burst Attack", 5)
 makeButton(combat, "Attack All (Infinite)", "This can stack but if too much may cause lag", 6, function()
     if not guiAlive then return end
@@ -2148,25 +2363,25 @@ makeButton(combat, "Attack All (Infinite)", "This can stack but if too much may 
     task.spawn(function()
         while guiAlive and infAttackEnabled do
             local remote = getRemote()
-            if not remote then 
-                task.wait(0.5) 
-                remote = waitForRemote(10) 
-                if not remote then 
-                    task.wait(1) 
-                    continue 
-                end 
+            if not remote then
+                task.wait(0.5)
+                remote = waitForRemote(10)
+                if not remote then
+                    task.wait(1)
+                    continue
+                end
             end
             for _, child in ipairs(sdFolder:GetChildren()) do
                 if not guiAlive or not infAttackEnabled then break end
                 if isValidTarget(child) then
                     local torso = getTorso(child)
                     if torso then
-                        local ok = pcall(function() 
-                            remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position}) 
+                        local ok = pcall(function()
+                            remote:InvokeServer("RayHit", {Hit = torso, Position = torso.Position})
                         end)
-                        if not ok then 
-                            cachedRemote = nil 
-                            break 
+                        if not ok then
+                            cachedRemote = nil
+                            break
                         end
                     end
                 end
@@ -2176,25 +2391,19 @@ makeButton(combat, "Attack All (Infinite)", "This can stack but if too much may 
     end)
 end)
 
--- ============================
--- POISON SECTION
--- ============================
 makeSection(combat, "Poison", 7)
 
 local function triggerPoison()
     local toolName = "Whig gun deluxe"
     local char = LocalPlayer.Character
     local backpack = LocalPlayer:FindFirstChild("Backpack")
-    
     local tool = (char and char:FindFirstChild(toolName)) or (backpack and backpack:FindFirstChild(toolName))
-    
     if tool then
         if tool.Parent == backpack then
             local humanoid = char:FindFirstChildOfClass("Humanoid")
             if humanoid then humanoid:EquipTool(tool) end
             task.wait(0.1)
         end
-        
         local ability = tool:FindFirstChild("ability")
         if ability then
             local args = {"C"}
@@ -2221,20 +2430,15 @@ makeToggle(combat, "Auto Poison Loop", false, 9, function(enabled)
     end)
 end)
 
--- ============================
--- BETTER THAN ATTACK ALL (with Loop Version)
--- ============================
 makeSection(combat, "Better Than Attack All", 10)
-
 makeButton(combat, "Boss Clapper 4000", "This Script Fuck Every Single Boss", 11, function()
     if not guiAlive then return end
     createNotification("IDK WHAT TO PUT HERE :OOOO", "This boss Is Going To Be Clap Hard ", 2, C.cyan)
-    pcall(function() 
-        loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))() 
+    pcall(function()
+        loadstring(game:HttpGet('https://raw.githubusercontent.com/Mrpekob/test-1/refs/heads/main/for%20got%20demon'))()
     end)
 end)
 
--- Loop Version warning note
 local loopWarningNote = Instance.new("Frame")
 loopWarningNote.Size = UDim2.new(1, 0, 0, isMobile and 50 or 42)
 loopWarningNote.BackgroundColor3 = C.card
@@ -2267,7 +2471,6 @@ loopWarningText.ZIndex = 10
 loopWarningText.Parent = loopWarningNote
 
 local loopVersionActive = false
-
 makeButton(combat, "Loop Version", "Runs Boss Clapper 4000 in infinite loop", 13, function()
     if not guiAlive then return end
     if loopVersionActive then
@@ -2286,9 +2489,6 @@ makeButton(combat, "Loop Version", "Runs Boss Clapper 4000 in infinite loop", 13
     end)
 end)
 
--- ============================
--- BOSS UTILITY (UNFF)
--- ============================
 makeSection(combat, "Boss Utility", 14)
 makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes force field (Executes 6x)", 15, function()
     if not guiAlive then return end
@@ -2302,9 +2502,6 @@ makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes forc
     createNotification("Unff", "FUCK FF", 2, C.green)
 end)
 
--- ============================
--- CONTROLS (STOP ALL)
--- ============================
 makeSection(combat, "Controls", 16)
 local stopBtn = Instance.new("TextButton")
 stopBtn.Size = UDim2.new(1, 0, 0, isMobile and 48 or 40)
@@ -2390,6 +2587,65 @@ makeButton(playerTab, "Heal", "Restore full health", 5, function()
 end)
 
 -- ============================
+-- AUTO REVIVE TOGGLE (PLAYER TAB)
+-- ============================
+makeSection(playerTab, "Auto Revive", 6)
+
+-- Info card explaining what it does
+local reviveInfoCard = Instance.new("Frame")
+reviveInfoCard.Size = UDim2.new(1, 0, 0, isMobile and 62 or 52)
+reviveInfoCard.BackgroundColor3 = C.card
+reviveInfoCard.BorderSizePixel = 0
+reviveInfoCard.ZIndex = 9
+reviveInfoCard.LayoutOrder = 7
+reviveInfoCard.Parent = playerTab
+corner(reviveInfoCard, isMobile and 10 or 8)
+
+local reviveInfoBar = Instance.new("Frame")
+reviveInfoBar.Size = UDim2.new(0, isMobile and 4 or 3, 0.6, 0)
+reviveInfoBar.Position = UDim2.new(0, isMobile and 10 or 8, 0.2, 0)
+reviveInfoBar.BackgroundColor3 = C.cyan
+reviveInfoBar.BorderSizePixel = 0
+reviveInfoBar.ZIndex = 10
+reviveInfoBar.Parent = reviveInfoCard
+corner(reviveInfoBar, 2)
+
+local reviveInfoTitle = Instance.new("TextLabel")
+reviveInfoTitle.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+reviveInfoTitle.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 10 or 8)
+reviveInfoTitle.BackgroundTransparency = 1
+reviveInfoTitle.Text = "Teleports to dead players and revives them"
+reviveInfoTitle.TextColor3 = C.text
+reviveInfoTitle.TextSize = isMobile and 12 or 11
+reviveInfoTitle.Font = Enum.Font.GothamSemibold
+reviveInfoTitle.TextXAlignment = Enum.TextXAlignment.Left
+reviveInfoTitle.ZIndex = 10
+reviveInfoTitle.Parent = reviveInfoCard
+
+local reviveInfoDesc = Instance.new("TextLabel")
+reviveInfoDesc.Size = UDim2.new(1, -28, 0, isMobile and 16 or 14)
+reviveInfoDesc.Position = UDim2.new(0, isMobile and 20 or 18, 0, isMobile and 30 or 26)
+reviveInfoDesc.BackgroundTransparency = 1
+reviveInfoDesc.Text = "Keeps retrying until revived. Skips SD folder. Stops if AFK."
+reviveInfoDesc.TextColor3 = C.textMuted
+reviveInfoDesc.TextSize = isMobile and 11 or 10
+reviveInfoDesc.Font = Enum.Font.Gotham
+reviveInfoDesc.TextXAlignment = Enum.TextXAlignment.Left
+reviveInfoDesc.TextWrapped = true
+reviveInfoDesc.ZIndex = 10
+reviveInfoDesc.Parent = reviveInfoCard
+
+-- The actual toggle
+makeToggle(playerTab, "Auto Revive (Until Done)", false, 8, function(enabled)
+    if not guiAlive then return end
+    if enabled then
+        startAutoRevive()
+    else
+        stopAutoRevive()
+    end
+end)
+
+-- ============================
 -- TELEPORT
 -- ============================
 local teleport = tabPages[5]
@@ -2421,10 +2677,10 @@ makeSection(misc, "Proximity", 1)
 makeToggle(misc, "Instant Proximity", false, 2, function(enabled)
     if not guiAlive then return end
     instantProximityEnabled = enabled
-    if enabled then 
+    if enabled then
         enableInstantProximity()
         createNotification("Proximity", "Instant proximity enabled", 2, C.green)
-    else 
+    else
         disableInstantProximity()
         createNotification("Proximity", "Instant proximity disabled", 2, C.yellow)
     end
@@ -2503,10 +2759,8 @@ nameBox.ClearTextOnFocus = false
 nameBox.ZIndex = 12
 nameBox.Parent = nameBoxFrame
 
-nameBox.Focused:Connect(function() 
-    if guiAlive then 
-        tw(nameBoxStroke, 0.2, {Color = C.purple, Transparency = 0}) 
-    end 
+nameBox.Focused:Connect(function()
+    if guiAlive then tw(nameBoxStroke, 0.2, {Color = C.purple, Transparency = 0}) end
 end)
 
 local nameApplyBtn = Instance.new("TextButton")
@@ -2524,20 +2778,20 @@ nameApplyBtn.Parent = nameInputRow
 corner(nameApplyBtn, isMobile and 8 or 6)
 
 if not isMobile then
-    nameApplyBtn.MouseEnter:Connect(function() 
-        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(130, 60, 210)}) end 
+    nameApplyBtn.MouseEnter:Connect(function()
+        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = Color3.fromRGB(130, 60, 210)}) end
     end)
-    nameApplyBtn.MouseLeave:Connect(function() 
-        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = C.purple}) end 
+    nameApplyBtn.MouseLeave:Connect(function()
+        if guiAlive then tw(nameApplyBtn, 0.15, {BackgroundColor3 = C.purple}) end
     end)
 end
 
 local function applyFakeName()
     if not guiAlive then return end
     local newName = nameBox.Text
-    if newName == "" then 
-        newName = LocalPlayer.Name 
-        nameBox.Text = newName 
+    if newName == "" then
+        newName = LocalPlayer.Name
+        nameBox.Text = newName
     end
     customFakeName = newName
     tw(nameApplyBtn, 0.1, {BackgroundColor3 = C.green}, Enum.EasingStyle.Linear)
@@ -2560,12 +2814,12 @@ end)
 
 makeToggle(misc, "Hide All Names", false, 7, function(enabled)
     if not guiAlive then return end
-    if enabled then 
-        enableNameHider() 
+    if enabled then
+        enableNameHider()
         createNotification("Name Hider", "All names hidden. Your name shows as: " .. customFakeName, 3, C.purple)
-    else 
-        disableNameHider() 
-        createNotification("Name Hider", "Names are now visible", 2, C.green) 
+    else
+        disableNameHider()
+        createNotification("Name Hider", "Names are now visible", 2, C.green)
     end
 end)
 
@@ -2590,11 +2844,13 @@ makeButton(misc, "Reset All Settings", "Restore default values", 13, function()
     end)
     stopEverything()
     loopVersionActive = false
-    if instantProximityEnabled then 
-        instantProximityEnabled = false 
-        disableInstantProximity() 
+    if instantProximityEnabled then
+        instantProximityEnabled = false
+        disableInstantProximity()
     end
     if nameHiderEnabled then disableNameHider() end
+    -- Stop auto revive on reset
+    if autoReviveEnabled then stopAutoRevive() end
     customFakeName = LocalPlayer.Name
     nameBox.Text = LocalPlayer.Name
     updateHomePlayerCard()
@@ -2625,6 +2881,8 @@ local function destroyGui()
     if speedConnection then speedConnection:Disconnect() end
     disableInstantProximity()
     disableNameHider()
+    -- Stop auto revive on destroy
+    stopAutoRevive()
     pcall(function() ScreenGui:Destroy() end)
 end
 
@@ -2678,12 +2936,12 @@ local miniSize = UDim2.new(0, SIDEBAR_W + (isMobile and 100 or 120), 0, isMobile
 MinBtn.MouseButton1Click:Connect(function()
     if not guiAlive then return end
     minimized = not minimized
-    if minimized then 
-        tw(Main, 0.35, {Size = miniSize}, Enum.EasingStyle.Back, Enum.EasingDirection.In) 
+    if minimized then
+        tw(Main, 0.35, {Size = miniSize}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         MinBtn.Text = "+"
-    else 
-        tw(Main, 0.35, {Size = fullSize}, Enum.EasingStyle.Back, Enum.EasingDirection.Out) 
-        MinBtn.Text = "-" 
+    else
+        tw(Main, 0.35, {Size = fullSize}, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        MinBtn.Text = "-"
     end
 end)
 
@@ -2692,6 +2950,7 @@ CloseBtn.MouseButton1Click:Connect(function()
     guiAlive = false
     loopVersionActive = false
     stopEverything()
+    stopAutoRevive()
     tw(Main, 0.4, {Size = UDim2.new(0, MAIN_W * 0.9, 0, MAIN_H * 0.9), BackgroundTransparency = 1}, Enum.EasingStyle.Back, Enum.EasingDirection.In)
     task.wait(0.5)
     ScreenGui:Destroy()
