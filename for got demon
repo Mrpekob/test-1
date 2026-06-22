@@ -9,161 +9,184 @@ local allowedTools = {
     ["Whig gun deluxe"] = true,
 }
 
-local activeLoops = {} -- Track active loops to prevent duplicates
-
--- Cache remote to avoid searching every frame
+local activeTargets = {}
+local registeredModels = {}
 local cachedRemote = nil
-local cachedToolName = nil
-local lastRemoteCheck = 0
-local REMOTE_CACHE_TIME = 0.5
 
-local function getRemote()
-    local now = tick()
-
-    -- Return cached if still valid
-    if cachedRemote and (now - lastRemoteCheck) < REMOTE_CACHE_TIME then
-        -- Verify cached remote still exists
-        if cachedRemote.Parent then
-            return cachedRemote
-        end
-        cachedRemote = nil
-        cachedToolName = nil
-    end
-
-    local character = player.Character
-    if not character then return nil end
+local function watchForTools(character)
     local backpack = player:FindFirstChild("Backpack")
 
-    -- Check equipped tools first (character), then backpack
-    local searchLocations = {character}
+    character.ChildAdded:Connect(function(child)
+        if child:IsA("Tool") and allowedTools[child.Name] then
+            cachedRemote = nil
+        end
+    end)
+
+    character.ChildRemoved:Connect(function(child)
+        if child:IsA("Tool") and allowedTools[child.Name] then
+            cachedRemote = nil
+        end
+    end)
+
     if backpack then
-        table.insert(searchLocations, backpack)
+        backpack.ChildAdded:Connect(function(child)
+            if child:IsA("Tool") and allowedTools[child.Name] then
+                cachedRemote = nil
+            end
+        end)
+    end
+end
+
+local function getRemote()
+    if cachedRemote and cachedRemote.Parent then
+        return cachedRemote
     end
 
-    for _, location in ipairs(searchLocations) do
+    cachedRemote = nil
+
+    local char = player.Character
+    if not char then return nil end
+    local backpack = player:FindFirstChild("Backpack")
+
+    for _, loc in ipairs({char, backpack}) do
+        if not loc then continue end
         for toolName in pairs(allowedTools) do
-            local tool = location:FindFirstChild(toolName)
+            local tool = loc:FindFirstChild(toolName)
             if tool then
                 local remotes = tool:FindFirstChild("Remotes")
                 if remotes then
-                    local serverControl = remotes:FindFirstChild("ServerControl")
-                    if serverControl then
-                        cachedRemote = serverControl
-                        cachedToolName = toolName
-                        lastRemoteCheck = now
-                        return serverControl
+                    local remote = remotes:FindFirstChild("ServerControl")
+                    if remote then
+                        cachedRemote = remote
+                        return remote
                     end
                 end
             end
         end
     end
 
-    cachedRemote = nil
-    cachedToolName = nil
     return nil
 end
 
-local function getTorso(target)
-    return target:FindFirstChild("Torso")
-        or target:FindFirstChild("HumanoidRootPart")
-        or target:FindFirstChild("Head")
+local function hasShield(target)
+    if not target then return false end
+    if target:FindFirstChild("ForceField") then return true end
+    if target:FindFirstChild("DestroyableFF") then return true end
+    return false
 end
 
-local function isValidTarget(target)
-    if not target or not target.Parent then return false end
-    if target.Parent ~= sdFolder then return false end
-
-    -- Must have a humanoid-like body part to hit
-    if not getTorso(target) then return false end
-
-    -- Check if humanoid exists and is alive
-    local humanoid = target:FindFirstChildOfClass("Humanoid")
-    if humanoid and humanoid.Health <= 0 then return false end
-
-    return true
-end
-
-local function startTargetLoop(target)
-    local targetName = target.Name
-
-    -- Prevent duplicate loops for same target
-    if activeLoops[target] then return end
-    activeLoops[target] = true
+local function registerTarget(target)
+    if not target or target.Parent ~= sdFolder then return end
+    if registeredModels[target] then return end
+    registeredModels[target] = true
 
     task.spawn(function()
-        local failCount = 0
-        local MAX_FAILS = 10
-
-        while isValidTarget(target) do
-            local remote = getRemote()
-
-            if remote then
-                local torso = getTorso(target)
-
-                if torso then
-                    local success, err = pcall(function()
-                        remote:InvokeServer("RayHit", {
-                            Hit = torso,
-                            Position = torso.Position,
-                        })
-                    end)
-
-                    if success then
-                        failCount = 0
-                    else
-                        failCount = failCount + 1
-                        if failCount >= MAX_FAILS then
-                            warn("[BF] Too many failures on " .. targetName .. ", stopping loop")
-                            break
-                        end
-                    end
-                end
-            end
-
-            task.wait(0.01)
+        local humanoid = target:WaitForChild("Humanoid", 10)
+        if not humanoid then
+            registeredModels[target] = nil
+            return
         end
 
-        activeLoops[target] = nil
+        local hitPart = target:FindFirstChild("HumanoidRootPart")
+            or target:FindFirstChild("Torso")
+            or target:FindFirstChild("Head")
+
+        if not hitPart then
+            task.wait(0.5)
+            hitPart = target:FindFirstChild("HumanoidRootPart")
+                or target:FindFirstChild("Torso")
+                or target:FindFirstChild("Head")
+        end
+
+        if not hitPart then
+            registeredModels[target] = nil
+            return
+        end
+
+        if target.Parent == sdFolder and humanoid.Health > 0 then
+            table.insert(activeTargets, {
+                model = target,
+                humanoid = humanoid,
+                hitPart = hitPart
+            })
+        else
+            registeredModels[target] = nil
+        end
     end)
 end
 
--- Start loops for existing targets
-for _, child in ipairs(sdFolder:GetChildren()) do
-    if isValidTarget(child) then
-        startTargetLoop(child)
+local function setupCharacter(character)
+    cachedRemote = nil
+    character:WaitForChild("HumanoidRootPart", 10)
+    watchForTools(character)
+
+    local humanoid = character:WaitForChild("Humanoid", 5)
+    if humanoid then
+        humanoid.Died:Connect(function()
+            cachedRemote = nil
+        end)
     end
 end
 
--- Auto-start for new targets
+if player.Character then
+    setupCharacter(player.Character)
+end
+
+player.CharacterAdded:Connect(function(character)
+    setupCharacter(character)
+end)
+
+-- Register existing targets
+for _, child in ipairs(sdFolder:GetChildren()) do
+    registerTarget(child)
+end
+
+-- Auto detect new entities
 sdFolder.ChildAdded:Connect(function(newChild)
-    -- Small delay to let the model fully load
-    task.wait(0.1)
-    if isValidTarget(newChild) then
-        startTargetLoop(newChild)
-    end
+    registerTarget(newChild)
 end)
 
--- Invalidate remote cache when tool changes
-player.CharacterAdded:Connect(function(char)
-    cachedRemote = nil
-    cachedToolName = nil
-
-    -- Re-check existing targets when respawning
-    task.wait(1)
-    for _, child in ipairs(sdFolder:GetChildren()) do
-        if isValidTarget(child) and not activeLoops[child] then
-            startTargetLoop(child)
+-- Cleanup when entity removed from SD
+sdFolder.ChildRemoved:Connect(function(removed)
+    registeredModels[removed] = nil
+    for i = #activeTargets, 1, -1 do
+        if activeTargets[i].model == removed then
+            table.remove(activeTargets, i)
+            break
         end
     end
 end)
 
--- Cleanup dead loops periodically
-task.spawn(function()
-    while task.wait(5) do
-        for target, _ in pairs(activeLoops) do
-            if not isValidTarget(target) then
-                activeLoops[target] = nil
-            end
+-- Master heartbeat loop
+RunService.Heartbeat:Connect(function()
+    -- Hard stop if nothing to attack
+    if #activeTargets == 0 then return end
+
+    local remote = getRemote()
+    if not remote then return end
+
+    for i = #activeTargets, 1, -1 do
+        local t = activeTargets[i]
+
+        -- Remove dead or gone targets
+        if not t.model.Parent or t.humanoid.Health <= 0 then
+            registeredModels[t.model] = nil
+            table.remove(activeTargets, i)
+            continue
         end
+
+        -- Skip shielded targets but keep in list
+        if hasShield(t.model) then
+            continue
+        end
+
+        task.spawn(function()
+            pcall(function()
+                remote:InvokeServer("RayHit", {
+                    Hit = t.hitPart,
+                    Position = t.hitPart.Position,
+                })
+            end)
+        end)
     end
 end)
