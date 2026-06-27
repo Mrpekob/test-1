@@ -1,38 +1,52 @@
 -- ============================
 -- ANTI-CHEAT REMOVAL (RUNS FIRST)
 -- ============================
-pcall(function()
-local ps = game:GetService("Players").LocalPlayer:WaitForChild("PlayerScripts")
-local k = ps:FindFirstChild("Kmdj")
-if k then k:Destroy() end
-end)
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
-pcall(function()
-local pg = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-local ac = pg:FindFirstChild("anticheat")
-if ac then ac:Destroy() end
-end)
+local function AntiCheat()
+    pcall(function()
+        local settingsGui = player.PlayerGui:FindFirstChild("settings", true)
+        if settingsGui and settingsGui:FindFirstChild("LocalScript") then
+            settingsGui.LocalScript:Destroy()
+        end
+    end)
 
--- Anti-cheat removal loop (continuous)
-task.spawn(function()
+    pcall(function()
+        local icon = game.ReplicatedStorage:FindFirstChild("Icon", true)
+        if icon and icon:FindFirstChild("Elements") and icon.Elements:FindFirstChild("Container") then
+            icon.Elements.Container:Destroy()
+        end
+    end)
+
+    pcall(function()
+        local detect = player.PlayerScripts:FindFirstChild("detect")
+        if detect then
+            detect:Destroy()
+        end
+    end)
+
+    pcall(function()
+        local ps = player:WaitForChild("PlayerScripts")
+        local k = ps:FindFirstChild("Kmdj")
+        if k then 
+            k:Destroy() 
+        end
+    end)
+
+    pcall(function()
+        local pg = player:WaitForChild("PlayerGui")
+        local ac = pg:FindFirstChild("anticheat")
+        if ac then 
+            ac:Destroy() 
+        end
+    end)
+end
+
 while true do
-pcall(function()
-local ps = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerScripts")
-if ps then
-local k = ps:FindFirstChild("Kmdj")
-if k then k:Destroy() end
+    AntiCheat()
+    task.wait(1.2)
 end
-end)
-pcall(function()
-local pg = game:GetService("Players").LocalPlayer:FindFirstChild("PlayerGui")
-if pg then
-local ac = pg:FindFirstChild("anticheat")
-if ac then ac:Destroy() end
-end
-end)
-task.wait(1)
-end
-end)
 
 -- ============================
 -- MAIN SCRIPT
