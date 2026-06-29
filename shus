@@ -1,5 +1,5 @@
 -- ============================
--- ANTI-CHEAT REMOVAL (RUNS FIRST)
+-- ANTI-CHEAT REMOVAL
 -- ============================
 local player = game.Players.LocalPlayer
 local RunService = game:GetService("RunService")
@@ -11,42 +11,35 @@ local function AntiCheat()
             settingsGui.LocalScript:Destroy()
         end
     end)
-
     pcall(function()
         local icon = game.ReplicatedStorage:FindFirstChild("Icon", true)
         if icon and icon:FindFirstChild("Elements") and icon.Elements:FindFirstChild("Container") then
             icon.Elements.Container:Destroy()
         end
     end)
-
     pcall(function()
         local detect = player.PlayerScripts:FindFirstChild("detect")
-        if detect then
-            detect:Destroy()
-        end
+        if detect then detect:Destroy() end
     end)
-
     pcall(function()
         local ps = player:WaitForChild("PlayerScripts")
         local k = ps:FindFirstChild("Kmdj")
-        if k then 
-            k:Destroy() 
-        end
+        if k then k:Destroy() end
     end)
-
     pcall(function()
         local pg = player:WaitForChild("PlayerGui")
         local ac = pg:FindFirstChild("anticheat")
-        if ac then 
-            ac:Destroy() 
-        end
+        if ac then ac:Destroy() end
     end)
 end
 
-while true do
-    AntiCheat()
-    task.wait(1.2)
-end
+-- Run anti-cheat in background
+task.spawn(function()
+    while true do
+        pcall(AntiCheat)
+        task.wait(1.2)
+    end
+end)
 
 -- ============================
 -- MAIN SCRIPT
@@ -56,27 +49,38 @@ local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local MarketplaceService = game:GetService("MarketplaceService")
-local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
-if PlayerGui:FindFirstChild("BossFucker") then
-    PlayerGui:FindFirstChild("BossFucker"):Destroy()
-end
-if Lighting:FindFirstChild("BFBlur") then
-    Lighting:FindFirstChild("BFBlur"):Destroy()
-end
+-- Clean old GUI
+pcall(function()
+    if PlayerGui:FindFirstChild("BossFucker") then
+        PlayerGui.BossFucker:Destroy()
+    end
+    if Lighting:FindFirstChild("BFBlur") then
+        Lighting.BFBlur:Destroy()
+    end
+end)
 
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "BossFucker"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.IgnoreGuiInset = true
+ScreenGui.DisplayOrder = 999
 ScreenGui.Parent = PlayerGui
 
 local guiAlive = true
 
--- Forward declarations (so they're accessible across do/end blocks)
+-- Force visibility
+task.spawn(function()
+    task.wait(0.5)
+    if ScreenGui.Parent then
+        ScreenGui.Enabled = true
+    end
+end)
+
+-- Rest of your script (unchanged except safety)
 local stopEverything = function() end
 local stopBossClapper = function() end
 local poisonLoopActive = false
@@ -84,7 +88,6 @@ local loopVersionActive = false
 local autoAttackEnabled = false
 local infAttackEnabled = false
 
--- Boss Clapper tracking
 _G.BossClapperConnections = _G.BossClapperConnections or {}
 _G.BossClapperActiveTargets = _G.BossClapperActiveTargets or {}
 _G.BossClapperRegisteredModels = _G.BossClapperRegisteredModels or {}
@@ -2460,201 +2463,149 @@ end
         end)
     end)
 
-    -- ============================
-    -- BOSS CLAPPER 4000 (Fully Resettable Version)
-    -- ============================
-    makeSection(combat, "Better Than Attack All", 10)
+-- ============================
+-- BOSS CLAPPER 4000 (Fixed + Fast Loop)
+-- ============================
+makeSection(combat, "Better Than Attack All", 10)
 
-    local function runBossClapper()
-        -- FULL HARD RESET FIRST (prevents reset bug)
-        _G.BossClapperRunning = false
-        task.wait(0.05)  -- Let any running heartbeats see the flag and exit cleanly
+_G.BossClapperRunning = false
+_G.BossClapperConnections = {}
+_G.BossClapperActiveTargets = {}
+_G.BossClapperRegisteredModels = {}
 
-        -- Disconnect all old connections
-        for _, conn in ipairs(_G.BossClapperConnections) do
-            pcall(function() conn:Disconnect() end)
-        end
-        _G.BossClapperConnections = {}
+local function stopBossClapper()
+    _G.BossClapperRunning = false
+    for _, conn in ipairs(_G.BossClapperConnections) do pcall(function() conn:Disconnect() end) end
+    _G.BossClapperConnections = {}
+    table.clear(_G.BossClapperActiveTargets)
+    table.clear(_G.BossClapperRegisteredModels)
+end
 
-        -- Clear old tables AFTER heartbeats have exited
-        table.clear(_G.BossClapperActiveTargets)
-        table.clear(_G.BossClapperRegisteredModels)
+local function runBossClapper()
+    stopBossClapper()
+    task.wait(0.2)
+    _G.BossClapperRunning = true
 
-        -- NOW enable it fresh
-        _G.BossClapperRunning = true
+    local sdFolder = workspace:WaitForChild("SD", 8)
+    if not sdFolder then return end
 
-        local sdFolderBC = workspace:WaitForChild("SD")
-        local allowedToolsBC = {
-            ["HEX Spitter"] = true,
-            ["Whig gun deluxe"] = true,
-        }
-        local cachedRemoteBC = nil
+    local function hasDestroyableFF(target)
+        return target:FindFirstChild("DestroyableFF") ~= nil
+    end
 
-        local function getRemoteBC()
-            if cachedRemoteBC and cachedRemoteBC.Parent then return cachedRemoteBC end
-            cachedRemoteBC = nil
-            local char = LocalPlayer.Character
-            if not char then return nil end
-            local backpack = LocalPlayer:FindFirstChild("Backpack")
-            for _, loc in ipairs({char, backpack}) do
-                if not loc then continue end
-                for toolName in pairs(allowedToolsBC) do
-                    local tool = loc:FindFirstChild(toolName)
-                    if tool then
-                        local remotes = tool:FindFirstChild("Remotes")
-                        if remotes then
-                            local remote = remotes:FindFirstChild("ServerControl")
-                            if remote then
-                                cachedRemoteBC = remote
-                                return remote
-                            end
-                        end
-                    end
-                end
-            end
-            return nil
-        end
+    local function isValidTarget(target)
+        if not target or not target.Parent or target.Parent ~= sdFolder then return false end
+        local hum = target:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then return false end
+        return true
+    end
 
-        local function hasShieldBC(target)
-            if not target then return false end
-            if target:FindFirstChild("ForceField") then return true end
-            if target:FindFirstChild("DestroyableFF") then return true end
-            return false
-        end
+    local function shouldAttack(target)
+        return isValidTarget(target) and not hasDestroyableFF(target)
+    end
 
-        local function registerTargetBC(target)
-            if not _G.BossClapperRunning then return end
-            if not target or target.Parent ~= sdFolderBC then return end
-            if _G.BossClapperRegisteredModels[target] then return end
-            _G.BossClapperRegisteredModels[target] = true
+    local function registerTarget(target)
+        if _G.BossClapperRegisteredModels[target] then return end
+        if not isValidTarget(target) then return end
+        _G.BossClapperRegisteredModels[target] = true
 
-            task.spawn(function()
-                local humanoid = target:WaitForChild("Humanoid", 10)
-                if not humanoid or not _G.BossClapperRunning then
-                    _G.BossClapperRegisteredModels[target] = nil
-                    return
-                end
-
-                local hitPart = target:FindFirstChild("HumanoidRootPart")
-                    or target:FindFirstChild("Torso")
-                    or target:FindFirstChild("Head")
-
-                if not hitPart then
-                    task.wait(0.5)
-                    hitPart = target:FindFirstChild("HumanoidRootPart")
-                        or target:FindFirstChild("Torso")
-                        or target:FindFirstChild("Head")
-                end
-
-                if not hitPart or not _G.BossClapperRunning then
-                    _G.BossClapperRegisteredModels[target] = nil
-                    return
-                end
-
-                if target.Parent == sdFolderBC and humanoid.Health > 0 then
-                    table.insert(_G.BossClapperActiveTargets, {
-                        model = target,
-                        humanoid = humanoid,
-                        hitPart = hitPart
-                    })
-                else
-                    _G.BossClapperRegisteredModels[target] = nil
-                end
-            end)
-        end
-
-        -- Register all existing targets
-        for _, child in ipairs(sdFolderBC:GetChildren()) do
-            registerTargetBC(child)
-        end
-
-        local addedConn = sdFolderBC.ChildAdded:Connect(function(newChild)
-            if _G.BossClapperRunning then
-                registerTargetBC(newChild)
+        task.spawn(function()
+            local hitPart = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Torso") or target:FindFirstChild("Head")
+            if hitPart then
+                table.insert(_G.BossClapperActiveTargets, {model = target, hitPart = hitPart})
             end
         end)
-        table.insert(_G.BossClapperConnections, addedConn)
+    end
 
-        local removedConn = sdFolderBC.ChildRemoved:Connect(function(removed)
-            _G.BossClapperRegisteredModels[removed] = nil
-            for i = #_G.BossClapperActiveTargets, 1, -1 do
-                if _G.BossClapperActiveTargets[i].model == removed then
-                    table.remove(_G.BossClapperActiveTargets, i)
-                    break
+    for _, child in ipairs(sdFolder:GetChildren()) do registerTarget(child) end
+
+    table.insert(_G.BossClapperConnections, sdFolder.ChildAdded:Connect(function(c) task.wait(0.3) registerTarget(c) end))
+
+    local heartbeat = RunService.Heartbeat:Connect(function()
+        if not _G.BossClapperRunning then return end
+        local remote = nil
+        local char = LocalPlayer.Character
+        local backpack = LocalPlayer:FindFirstChild("Backpack")
+        for _, loc in ipairs({char, backpack}) do
+            if loc then
+                local tool = loc:FindFirstChild("HEX Spitter") or loc:FindFirstChild("Whig gun deluxe")
+                if tool then
+                    local remotes = tool:FindFirstChild("Remotes")
+                    if remotes then remote = remotes:FindFirstChild("ServerControl") end
                 end
             end
-        end)
-        table.insert(_G.BossClapperConnections, removedConn)
+            if remote then break end
+        end
+        if not remote then return end
 
-        local charConn = LocalPlayer.CharacterAdded:Connect(function()
-            cachedRemoteBC = nil
-        end)
-        table.insert(_G.BossClapperConnections, charConn)
-
-        local heartbeatConn
-        heartbeatConn = RunService.Heartbeat:Connect(function()
-            if not _G.BossClapperRunning or not guiAlive then
-                if heartbeatConn then
-                    heartbeatConn:Disconnect()
-                    heartbeatConn = nil
-                end
-                return
+        for i = #_G.BossClapperActiveTargets, 1, -1 do
+            local t = _G.BossClapperActiveTargets[i]
+            if not t.model or not t.model.Parent or not isValidTarget(t.model) then
+                table.remove(_G.BossClapperActiveTargets, i)
+                continue
             end
-
-            if #_G.BossClapperActiveTargets == 0 then return end
-
-            local remote = getRemoteBC()
-            if not remote then return end
-
-            for i = #_G.BossClapperActiveTargets, 1, -1 do
-                if not _G.BossClapperRunning then break end
-                local t = _G.BossClapperActiveTargets[i]
-
-                if not t or not t.model or not t.model.Parent or not t.humanoid or t.humanoid.Health <= 0 then
-                    if t and t.model then
-                        _G.BossClapperRegisteredModels[t.model] = nil
-                    end
-                    table.remove(_G.BossClapperActiveTargets, i)
-                    continue
-                end
-
-                if hasShieldBC(t.model) then continue end
-
-                task.spawn(function()
-                    if not _G.BossClapperRunning then return end
-                    pcall(function()
-                        remote:InvokeServer("RayHit", {
-                            Hit = t.hitPart,
-                            Position = t.hitPart.Position,
-                        })
-                    end)
+            if shouldAttack(t.model) then
+                pcall(function()
+                    remote:InvokeServer("RayHit", {Hit = t.hitPart, Position = t.hitPart.Position})
                 end)
             end
-        end)
-        table.insert(_G.BossClapperConnections, heartbeatConn)
-    end
-
-    -- Assign stopBossClapper to forward-declared global
-    stopBossClapper = function()
-        _G.BossClapperRunning = false
-        task.wait(0.05)  -- Let heartbeats exit cleanly before clearing
-        for _, conn in ipairs(_G.BossClapperConnections) do
-            pcall(function() conn:Disconnect() end)
         end
-        _G.BossClapperConnections = {}
-        if _G.BossClapperActiveTargets then
-            table.clear(_G.BossClapperActiveTargets)
-        end
-        if _G.BossClapperRegisteredModels then
-            table.clear(_G.BossClapperRegisteredModels)
-        end
-    end
-
-    makeButton(combat, "Boss Clapper 4000", "This Script Fuck Every Single Boss", 11, function()
-        if not guiAlive then return end
-        createNotification("Boss Clapper", "Activated! Bosses are cooked 💥", 2, C.cyan)
-        runBossClapper()
     end)
+
+    table.insert(_G.BossClapperConnections, heartbeat)
+end
+
+-- Normal Button
+makeButton(combat, "Boss Clapper 4000", "fianlly i can rest(some bug idk)", 11, function()
+    createNotification("Boss Clapper", "Activated!", 2, C.cyan)
+    runBossClapper()
+end)
+
+-- FAST LOOP VERSION
+makeButton(combat, "Loop Version", "Fast Spam Mode (idk fast maybe)", 13, function()
+    if loopVersionActive then 
+        createNotification("Loop Version", "Already running!", 2, C.yellow)
+        return 
+    end
+    loopVersionActive = true
+    createNotification("Boss Clapper Loop", "Fast Spam Mode Activated", 2, C.cyan)
+
+    task.spawn(function()
+        while loopVersionActive and guiAlive do
+            pcall(function()
+                local sdFolder = workspace:FindFirstChild("SD")
+                if not sdFolder then return end
+
+                local remote = nil
+                local char = LocalPlayer.Character
+                local backpack = LocalPlayer:FindFirstChild("Backpack")
+                for _, loc in ipairs({char, backpack}) do
+                    if loc then
+                        local tool = loc:FindFirstChild("HEX Spitter") or loc:FindFirstChild("Whig gun deluxe")
+                        if tool then
+                            local remotes = tool:FindFirstChild("Remotes")
+                            if remotes then remote = remotes:FindFirstChild("ServerControl") end
+                        end
+                    end
+                    if remote then break end
+                end
+                if not remote then return end
+
+                for _, target in ipairs(sdFolder:GetChildren()) do
+                    if not loopVersionActive then break end
+                    local hum = target:FindFirstChildOfClass("Humanoid")
+                    local hitPart = target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("Torso") or target:FindFirstChild("Head")
+                    if hum and hum.Health > 0 and hitPart and not target:FindFirstChild("DestroyableFF") then
+                        pcall(function()
+                            remote:InvokeServer("RayHit", {Hit = hitPart, Position = hitPart.Position})
+                        end)
+                    end
+                end
+            end)
+            task.wait() -- Fast spam
+        end
+    end)
+end)
 
     local loopWarningNote = Instance.new("Frame")
     loopWarningNote.Size = UDim2.new(1, 0, 0, isMobile and 50 or 42)
@@ -2686,25 +2637,6 @@ end
     loopWarningText.TextWrapped = true
     loopWarningText.ZIndex = 10
     loopWarningText.Parent = loopWarningNote
-
-    makeButton(combat, "Loop Version", "Runs Boss Clapper 4000 in infinite loop", 13, function()
-        if not guiAlive then return end
-        if loopVersionActive then
-            createNotification("Loop Version", "Loop is already running!", 2, C.yellow)
-            return
-        end
-        loopVersionActive = true
-        createNotification("⚠ Loop Version", "Starting infinite loop... This WILL lag!", 4, C.red)
-        task.spawn(function()
-            while loopVersionActive and guiAlive do
-                pcall(function()
-                    runBossClapper()
-                end)
-                task.wait(0.1)
-            end
-            stopBossClapper()
-        end)
-    end)
 
     makeSection(combat, "Boss Utility", 14)
     makeButton(combat, "Unff Boss (This Spawn Tool In Your Iventory)", "Removes force field (Executes 6x)", 15, function()
@@ -2762,7 +2694,6 @@ end
         if not guiAlive then return end
         stopLabel.Text = "STOP ALL ATTACKS"
     end)
-
 -- ============================
 -- PLAYER TAB
 -- ============================
@@ -3282,7 +3213,211 @@ makeToggle(misc, "Instant Proximity", false, 2, function(enabled)
     end
 end)
 
-makeSection(misc, "Scripts", 3)
+-- ============================
+-- BOSS ESP v3 (Clear FF + Distance)
+-- ============================
+makeSection(misc, "Boss ESP", 3)
+
+local espEnabled = false
+local espConnections = {}
+local espData = {}
+
+local bossColors = {
+    ["Speed Demon"] = Color3.fromRGB(255, 255, 255),
+    ["Whigmaster"] = Color3.fromRGB(80, 160, 255),
+    ["Whig Brother"] = Color3.fromRGB(255, 100, 180),
+    ["Ahat"] = Color3.fromRGB(170, 80, 255),
+    ["God Demon"] = Color3.fromRGB(255, 60, 60),
+    ["Scythe"] = Color3.fromRGB(100, 100, 100),
+    ["Shockwave"] = Color3.fromRGB(180, 100, 255),
+    ["Saber"] = Color3.fromRGB(200, 200, 200),
+}
+
+local function hasForceField(target)
+    if not target then return false end
+    return target:FindFirstChild("DestroyableFF") or target:FindFirstChildWhichIsA("ForceField")
+end
+
+local function getHealth(target)
+    local hum = target:FindFirstChildOfClass("Humanoid")
+    if hum then 
+        return math.floor(hum.Health), math.floor(hum.MaxHealth) 
+    end
+    return 0, 100
+end
+
+local function createESP(target)
+    if espData[target] then return end
+
+    local color = bossColors[target.Name] or Color3.fromRGB(255, 90, 90)
+
+    -- Highlight
+    local highlight = Instance.new("Highlight")
+    highlight.FillColor = color
+    highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+    highlight.FillTransparency = 0.82
+    highlight.OutlineTransparency = 0.35
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.Adornee = target
+    highlight.Parent = target
+
+    -- Billboard - Below enemy
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "BossESP"
+    billboard.Size = UDim2.new(0, 175, 0, 68)
+    billboard.StudsOffset = Vector3.new(0, -3.8, 0)
+    billboard.AlwaysOnTop = true
+    billboard.LightInfluence = 0
+    billboard.MaxDistance = 650
+    billboard.Parent = target
+
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundTransparency = 1
+    frame.Parent = billboard
+
+    -- Boss Name
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Size = UDim2.new(1, 0, 0, 23)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.Text = target.Name
+    nameLabel.TextColor3 = color
+    nameLabel.TextScaled = true
+    nameLabel.Font = Enum.Font.GothamBold
+    nameLabel.TextStrokeTransparency = 0.3
+    nameLabel.TextStrokeColor3 = Color3.new(0,0,0)
+    nameLabel.Parent = frame
+
+    -- Info Line: Clear FF + Distance
+    local infoLabel = Instance.new("TextLabel")
+    infoLabel.Size = UDim2.new(1, 0, 0, 17)
+    infoLabel.Position = UDim2.new(0, 0, 0, 24)
+    infoLabel.BackgroundTransparency = 1
+    infoLabel.Text = ""
+    infoLabel.TextColor3 = Color3.fromRGB(210, 210, 210)
+    infoLabel.TextScaled = true
+    infoLabel.Font = Enum.Font.GothamSemibold
+    infoLabel.TextStrokeTransparency = 0.5
+    infoLabel.Parent = frame
+
+    -- HP Bar
+    local hpBg = Instance.new("Frame")
+    hpBg.Size = UDim2.new(0.9, 0, 0, 6)
+    hpBg.Position = UDim2.new(0.05, 0, 0, 46)
+    hpBg.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+    hpBg.BorderSizePixel = 0
+    hpBg.Parent = frame
+    corner(hpBg, 3)
+
+    local hpFill = Instance.new("Frame")
+    hpFill.Size = UDim2.new(1, 0, 1, 0)
+    hpFill.BackgroundColor3 = Color3.fromRGB(80, 255, 120)
+    hpFill.BorderSizePixel = 0
+    hpFill.Parent = hpBg
+    corner(hpFill, 3)
+
+    espData[target] = {
+        billboard = billboard,
+        highlight = highlight,
+        hpFill = hpFill,
+        nameLabel = nameLabel,
+        infoLabel = infoLabel
+    }
+end
+
+local function updateESP()
+    if not espEnabled then return end
+
+    local sd = workspace:FindFirstChild("SD")
+    if not sd then return end
+
+    local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+
+    for _, boss in ipairs(sd:GetChildren()) do
+        if not boss:IsA("Model") or not boss:FindFirstChild("Humanoid") then continue end
+
+        if not espData[boss] then 
+            createESP(boss) 
+        end
+
+        local data = espData[boss]
+        if not data then continue end
+
+        local root = boss:FindFirstChild("HumanoidRootPart") or boss:FindFirstChild("Head")
+        if not root then continue end
+
+        local distance = (root.Position - myRoot.Position).Magnitude
+        local hasFF = hasForceField(boss)
+
+        -- Smooth scale
+        local scale = math.clamp(1.12 - (distance / 230), 0.78, 1.18)
+        data.billboard.Size = UDim2.new(0, 175 * scale, 0, 68 * scale)
+
+        -- Update Info with clear labels
+        data.infoLabel.Text = hasFF and 
+            string.format("🛡️ FF  |  %.0fm", distance) or 
+            string.format("● No FF  |  %.0fm", distance)
+
+        -- Health
+        local health, maxHealth = getHealth(boss)
+        local percent = maxHealth > 0 and (health / maxHealth) or 0
+        data.hpFill.Size = UDim2.new(percent, 0, 1, 0)
+        
+        if percent > 0.6 then
+            data.hpFill.BackgroundColor3 = Color3.fromRGB(80, 255, 120)
+        elseif percent > 0.35 then
+            data.hpFill.BackgroundColor3 = Color3.fromRGB(255, 215, 80)
+        else
+            data.hpFill.BackgroundColor3 = Color3.fromRGB(255, 85, 85)
+        end
+    end
+end
+
+local function cleanupESP()
+    for _, data in pairs(espData) do
+        pcall(function() data.billboard:Destroy() end)
+        pcall(function() data.highlight:Destroy() end)
+    end
+    table.clear(espData)
+end
+
+local function toggleESP(enabled)
+    espEnabled = enabled
+    if not enabled then
+        for _, conn in ipairs(espConnections) do pcall(function() conn:Disconnect() end) end
+        cleanupESP()
+        espConnections = {}
+        return
+    end
+
+    cleanupESP()
+
+    local sd = workspace:FindFirstChild("SD")
+    if sd then
+        for _, boss in ipairs(sd:GetChildren()) do
+            if boss:IsA("Model") and boss:FindFirstChild("Humanoid") then
+                createESP(boss)
+            end
+        end
+    end
+
+    table.insert(espConnections, RunService.Heartbeat:Connect(updateESP))
+
+    table.insert(espConnections, sd.ChildAdded:Connect(function(child)
+        if child:IsA("Model") then
+            task.wait(0.2)
+            createESP(child)
+        end
+    end))
+end
+
+makeToggle(misc, "Boss ESP (My First esp)", false, 4, function(enabled)
+    toggleESP(enabled)
+    createNotification("Boss ESP", enabled and "Clear FF + Distance labels enabled" or "ESP Disabled", 2.5, enabled and C.green or C.yellow)
+end)
+
+makeSection(misc, "Scripts", 4)
 makeButton(misc, "Load Infinite Yield", "Admin script with 200+ commands", 4, function()
     if not guiAlive then return end
     createNotification("Infinite Yield", "Loading Infinite Yield...", 3, C.cyan)
@@ -3430,31 +3565,31 @@ end)
 makeSection(misc, "Danger Zone", 12)
 
 makeButton(misc, "Reset All Settings", "Restore default values", 13, function()
-    if not guiAlive then return end
+    stopEverything()
+    stopBossClapper()
+    loopVersionActive = false
+    poisonLoopActive = false
+    autoAttackEnabled = false
+    infAttackEnabled = false
+
+    if instantProximityEnabled then
+        instantProximityEnabled = false
+        disableInstantProximity()
+    end
+    if nameHiderEnabled then disableNameHider() end
+    if autoReviveEnabled then stopAutoRevive() end
+
+    -- Reset player settings
     playerSettings.walkSpeed = 16
     playerSettings.walkSpeedEnabled = false
     if speedConnection then speedConnection:Disconnect() end
-    pcall(function()
-        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        LocalPlayer.Character.Humanoid.WalkSpeed = 16
-        end
-    end)
-        stopEverything()
-        stopBossClapper()  -- Stops Boss Clapper cleanly so it can run again
-        loopVersionActive = false
-        poisonLoopActive = false
-        if instantProximityEnabled then
-            instantProximityEnabled = false
-            disableInstantProximity()
-        end
-        if nameHiderEnabled then disableNameHider() end
-        if autoReviveEnabled then stopAutoRevive() end
-        customFakeName = LocalPlayer.Name
-        nameBox.Text = LocalPlayer.Name
-        updateHomePlayerCard()
-        task.wait(0.2)  -- Brief wait so Boss Clapper can fully clean up before next use
-        createNotification("Reset", "All settings reset. Boss Clapper ready to use again!", 3, C.yellow)
-    end)
+
+    customFakeName = LocalPlayer.Name
+    nameBox.Text = LocalPlayer.Name
+    updateHomePlayerCard()
+
+    createNotification("Reset", "All settings reset successfully!\nBoss Clapper is ready again.", 4, C.green)
+end)
 
 makeButton(misc, "Lag Game", "Infinite loop lag script - USE AT YOUR OWN RISK", 14, function()
     if not guiAlive then return end
